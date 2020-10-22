@@ -1,23 +1,23 @@
-// SPDX-License-Identifier: MIT
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import '@pancakeswap/pancake-swap-lib/contracts/math/SafeMath.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/SafeBEP20.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/access/Ownable.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./LotteryNFT.sol";
 
+// 4 numbers
 contract Lottery is Ownable {
     using SafeMath for uint256;
-    using SafeBEP20 for IBEP20;
+    using SafeERC20 for IERC20;
 
     uint8 constant keyLengthForEachBuy = 11;
     // Allocation for first/sencond/third reward
     uint256[] private allocation = [60, 20, 10];
     // The TOKEN to buy lottery
-    IBEP20 public cake;
+    IERC20 public cake;
     // The Lottery NFT for tickets
     LotteryNFT public lotteryNFT;
     // adminAddress
@@ -33,7 +33,7 @@ contract Lottery is Ownable {
     mapping (uint256 => uint256[]) public lotteryInfo;
     // issueId => [totalAmount, firstMatchAmount, secondMatchingAmount, thirdMatchingAmount]
     mapping (uint256 => uint256[]) public historyAmount;
-    // issueId => buyAmountSum
+    // issueId => trickyNumber => buyAmountSum
     mapping (uint256 => mapping(uint64 => uint256)) public userBuyAmountSum;
     // address => [tokenId]
     mapping (address => uint256[]) public userInfo;
@@ -216,7 +216,6 @@ contract Lottery is Ownable {
     }
 
     function  multiClaim(uint256[] memory _tickets) public {
-        require (drawed(), 'havnt drawed, can not claim');
         uint256 totalReward = 0;
         for (uint i = 0; i < _tickets.length; i++) {
             require (msg.sender == lotteryNFT.ownerOf(_tickets[i]), "not from owner");
@@ -258,7 +257,7 @@ contract Lottery is Ownable {
         return result;
     }
 
-    function calculateMatchingRewardAmount() public view returns (uint256[4] memory) {
+    function calculateMatchingRewardAmount() internal view returns (uint256[4] memory) {
         uint64[keyLengthForEachBuy] memory numberIndexKey = generateNumberIndexKey(winningNumbers);
 
         uint256 totalAmout1 = userBuyAmountSum[issueIndex][numberIndexKey[0]];
