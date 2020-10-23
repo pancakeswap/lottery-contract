@@ -1,21 +1,74 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
+import "./LotteryNFT.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 
-import "./LotteryNFT.sol";
+contract LotteryOwnable {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor () internal {
+    }
+
+    function initOwner(address owner) internal {
+        _owner = owner;
+        emit OwnershipTransferred(address(0), owner);
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(_owner == msg.sender, "Ownable: caller is not the owner");
+        _;
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby removing any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
+}
 
 // 4 numbers
-contract Lottery is Ownable {
+contract Lottery is LotteryOwnable, Initializable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     uint8 constant keyLengthForEachBuy = 11;
     // Allocation for first/sencond/third reward
-    uint256[] private allocation = [60, 20, 10];
+    uint256[3] private allocation = [60, 20, 10];
     // The TOKEN to buy lottery
     IERC20 public cake;
     // The Lottery NFT for tickets
@@ -55,22 +108,27 @@ contract Lottery is Ownable {
     event MultiClaim(address indexed user, uint256 amount);
     event MultiBuy(address indexed user, uint256 amount);
 
-    constructor(
+    constructor() public {
+    }
+
+    function initialize(
         IERC20 _cake,
         LotteryNFT _lottery,
         uint256 _maxNumber,
+        address _owner,
         address _adminAddress
-    ) public {
+    ) public initializer {
         cake = _cake;
         lotteryNFT = _lottery;
         maxNumber = _maxNumber;
         adminAddress = _adminAddress;
         lastTimestamp = block.timestamp;
+        initOwner(_owner);
     }
 
     uint8[4] public nullTicket = [0,0,0,0];
 
-    function drawed() public view returns(bool res) {
+    function drawed() public view returns(bool) {
         return winningNumbers[0] != 0;
     }
 
@@ -157,7 +215,7 @@ contract Lottery is Ownable {
         if(_numbers[0] == 0)  {
             uint256 tokenId = lotteryNFT.newLotteryItem(address(this), _numbers, _amount, issueIndex);
             lotteryInfo[issueIndex].push(tokenId);
-            totalAmount = totalAmount + _amount;
+            totalAmount = totalAmount.add(_amount);
             lastTimestamp = block.timestamp;
             emit Buy(address(this), tokenId);
         }
@@ -168,7 +226,7 @@ contract Lottery is Ownable {
                 totalAddresses = totalAddresses + 1;
             }
             userInfo[msg.sender].push(tokenId);
-            totalAmount = totalAmount + _amount;
+            totalAmount = totalAmount.add(_amount);
             lastTimestamp = block.timestamp;
             cake.safeTransferFrom(address(msg.sender), address(this), _amount);
             uint64[keyLengthForEachBuy] memory userNumberIndex = generateNumberIndexKey(_numbers);
@@ -192,9 +250,9 @@ contract Lottery is Ownable {
                 totalAddresses = totalAddresses + 1;
             }
             userInfo[msg.sender].push(tokenId);
-            totalAmount = totalAmount + _price;
+            totalAmount = totalAmount.add(_price);
             lastTimestamp = block.timestamp;
-            totalPrice = totalPrice + _price;
+            totalPrice = totalPrice.add(_price);
             uint64[keyLengthForEachBuy] memory numberIndexKey = generateNumberIndexKey(_numbers[i]);
             for (uint k = 0; k < keyLengthForEachBuy; k++) {
                 userBuyAmountSum[issueIndex][numberIndexKey[k]]=userBuyAmountSum[issueIndex][numberIndexKey[k]].add(_price);
