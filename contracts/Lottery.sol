@@ -353,4 +353,9 @@ contract Lottery is LotteryOwnable, Initializable {
         minPrice = _price;
     }
 
+    // Set the minimum price for one ticket
+    function setMaxNumber(uint8 _maxNumber) external onlyAdmin {
+        maxNumber = _maxNumber;
+    }
+
 }
