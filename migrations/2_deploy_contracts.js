@@ -4,18 +4,17 @@ const LotteryNFT = artifacts.require("LotteryNFT");
 const LotteryUpgradeProxy = artifacts.require("LotteryUpgradeProxy");
 
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+const web3 = new Web3(new Web3.providers.HttpProvider('https://data-seed-prebsc-1-s1.binance.org:8545'));
 
-
-module.exports = async function(deployer, network, accounts) {
+module.exports = async function(deployer) {
     await deployer.deploy(LotteryNFT);
-    await deployer.deploy(MockBEP20, "Pancake", "cake", "100000000000000000000000000");
+    const cake = await MockBEP20.at('0x43acC9A5E94905c7D31415EB410F3E666e5F1e9A');
     await deployer.deploy(Lottery);
 
-    proxyAdmin=accounts[9];
-    lotteryOwner=accounts[7];
-    alice=accounts[1];
-    admin=alice;
+    proxyAdmin= '0x0F9399FC81DaC77908A2Dde54Bb87Ee2D17a3373';
+    lotteryOwner= '0xB9FA21a62FC96Cb2aC635a051061E2E50d964051'
+    lotteryAdmin= '0xB9FA21a62FC96Cb2aC635a051061E2E50d964051';
+
     const abiEncodeData = web3.eth.abi.encodeFunctionCall({
         "inputs": [
             {
@@ -29,9 +28,9 @@ module.exports = async function(deployer, network, accounts) {
                 "type": "address"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint8",
                 "name": "_maxNumber",
-                "type": "uint256"
+                "type": "uint8"
             },
             {
                 "internalType": "address",
@@ -48,9 +47,12 @@ module.exports = async function(deployer, network, accounts) {
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    }, [MockBEP20.address, LotteryNFT.address, 4, lotteryOwner, admin]);
+    }, [cake.address, LotteryNFT.address, '5', lotteryOwner, lotteryAdmin]);
 
     await deployer.deploy(LotteryUpgradeProxy, Lottery.address, proxyAdmin, abiEncodeData);
+
+    const lotteryNft = await LotteryNFT.deployed();
+    await lotteryNft.transferOwnership(LotteryUpgradeProxy.address);
 };
 
 

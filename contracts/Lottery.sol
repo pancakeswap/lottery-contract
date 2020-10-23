@@ -268,9 +268,9 @@ contract Lottery is LotteryOwnable, Initializable {
         result[5] = tempNumber[0]*256*256 + 1*256+ tempNumber[1];
         result[6] = tempNumber[0]*256*256 + 2*256+ tempNumber[2];
         result[7] = tempNumber[0]*256*256 + 3*256+ tempNumber[3];
-        result[8] = 1*256*256*256 + tempNumber[1]*256*256 + 2*256+ tempNumber[2];
-        result[9] = 1*256*256*256 + tempNumber[1]*256*256 + 3*256+ tempNumber[3];
-        result[10] = 2*256*256*256 + tempNumber[2]*256*256 + 3*256+ tempNumber[3];
+        result[8] = 1*256*256*256 + tempNumber[1]*256*256 + 2*256 + tempNumber[2];
+        result[9] = 1*256*256*256 + tempNumber[1]*256*256 + 3*256 + tempNumber[3];
+        result[10] = 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
 
         return result;
     }
