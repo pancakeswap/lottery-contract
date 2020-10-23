@@ -26,8 +26,8 @@ contract Lottery is LotteryOwnable, Initializable {
     address public adminAddress;
     // maxNumber
     uint8 public maxNumber;
-    // minPrice
-    uint256 public minPrice = 10;
+    // minPrice, if decimal is not 18, please reset it
+    uint256 public minPrice = uint256(10).mul(1e18);
 
     // =================================
 
