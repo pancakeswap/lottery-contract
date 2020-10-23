@@ -2,73 +2,22 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "./LotteryNFT.sol";
+import "./LotteryOwnable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 
-contract LotteryOwnable {
-    address private _owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    constructor () internal {
-    }
-
-    function initOwner(address owner) internal {
-        _owner = owner;
-        emit OwnershipTransferred(address(0), owner);
-    }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(_owner == msg.sender, "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public virtual onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }
-}
 
 // 4 numbers
 contract Lottery is LotteryOwnable, Initializable {
     using SafeMath for uint256;
+    using SafeMath for uint8;
     using SafeERC20 for IERC20;
 
     uint8 constant keyLengthForEachBuy = 11;
     // Allocation for first/sencond/third reward
-    uint256[3] private allocation = [60, 20, 10];
+    uint8[3] public allocation = [60, 20, 10];
     // The TOKEN to buy lottery
     IERC20 public cake;
     // The Lottery NFT for tickets
@@ -76,7 +25,9 @@ contract Lottery is LotteryOwnable, Initializable {
     // adminAddress
     address public adminAddress;
     // maxNumber
-    uint256 public maxNumber = 5;
+    uint8 public maxNumber;
+    // minPrice
+    uint256 public minPrice = 10;
 
     // =================================
 
@@ -114,7 +65,7 @@ contract Lottery is LotteryOwnable, Initializable {
     function initialize(
         IERC20 _cake,
         LotteryNFT _lottery,
-        uint256 _maxNumber,
+        uint8 _maxNumber,
         address _owner,
         address _adminAddress
     ) public initializer {
@@ -128,12 +79,16 @@ contract Lottery is LotteryOwnable, Initializable {
 
     uint8[4] public nullTicket = [0,0,0,0];
 
+    modifier onlyAdmin() {
+        require(msg.sender == adminAddress, "admin: wut?");
+        _;
+    }
+
     function drawed() public view returns(bool) {
         return winningNumbers[0] != 0;
     }
 
-    function reset() external {
-        require(msg.sender == adminAddress, "admin: wut?");
+    function reset() external onlyAdmin {
         require(drawed(), "drawed?");
         lastTimestamp = block.timestamp;
         totalAddresses = 0;
@@ -145,17 +100,16 @@ contract Lottery is LotteryOwnable, Initializable {
         issueIndex = issueIndex +1;
         if(getMatchingRewardAmount(issueIndex-1, 4) == 0) {
             uint256 amount = getTotalRewards(issueIndex-1).mul(allocation[0]).div(100);
-            buy(amount, nullTicket);
+            internalBuy(amount, nullTicket);
         }
         emit Reset(issueIndex);
     }
 
-    function drawing() public {
-        require(msg.sender == adminAddress, "admin: wut?");
+    function drawing() external onlyAdmin {
         require(!drawed(), "reset?");
         bytes32 _structHash;
         uint256 _randomNumber;
-        uint256 _maxNumber = maxNumber;
+        uint8 _maxNumber = maxNumber;
         bytes32 _blockhash = blockhash(block.number-1);
 
         // 1
@@ -207,42 +161,48 @@ contract Lottery is LotteryOwnable, Initializable {
         emit Drawing(issueIndex, winningNumbers);
     }
 
-    function buy(uint256 _amount, uint8[4] memory _numbers) public {
+    function internalBuy(uint256 _price, uint8[4] memory _numbers) internal {
         require (!drawed(), 'drawed, can not buy now');
         for (uint i = 0; i < 4; i++) {
             require (_numbers[i] <= maxNumber, 'exceed the maximum');
         }
-        if(_numbers[0] == 0)  {
-            uint256 tokenId = lotteryNFT.newLotteryItem(address(this), _numbers, _amount, issueIndex);
-            lotteryInfo[issueIndex].push(tokenId);
-            totalAmount = totalAmount.add(_amount);
-            lastTimestamp = block.timestamp;
-            emit Buy(address(this), tokenId);
-        }
-        else {
-            uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers, _amount, issueIndex);
-            lotteryInfo[issueIndex].push(tokenId);
-            if (userInfo[msg.sender].length == 0) {
-                totalAddresses = totalAddresses + 1;
-            }
-            userInfo[msg.sender].push(tokenId);
-            totalAmount = totalAmount.add(_amount);
-            lastTimestamp = block.timestamp;
-            cake.safeTransferFrom(address(msg.sender), address(this), _amount);
-            uint64[keyLengthForEachBuy] memory userNumberIndex = generateNumberIndexKey(_numbers);
-            for (uint i = 0; i < keyLengthForEachBuy; i++) {
-                userBuyAmountSum[issueIndex][userNumberIndex[i]]=userBuyAmountSum[issueIndex][userNumberIndex[i]].add(_amount);
-            }
-            emit Buy(msg.sender, tokenId);
-        }
+        uint256 tokenId = lotteryNFT.newLotteryItem(address(this), _numbers, _price, issueIndex);
+        lotteryInfo[issueIndex].push(tokenId);
+        totalAmount = totalAmount.add(_price);
+        lastTimestamp = block.timestamp;
+        emit Buy(address(this), tokenId);
+
     }
 
-    function  multiBuy(uint256 _price, uint8[4][] memory _numbers) public {
+    function buy(uint256 _price, uint8[4] memory _numbers) external {
         require (!drawed(), 'drawed, can not buy now');
+        require (_price > minPrice, 'price must above 10');
+        for (uint i = 0; i < 4; i++) {
+            require (_numbers[i] <= maxNumber && _numbers[i] > 0, 'exceed number scope');
+        }
+        uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers, _price, issueIndex);
+        lotteryInfo[issueIndex].push(tokenId);
+        if (userInfo[msg.sender].length == 0) {
+            totalAddresses = totalAddresses + 1;
+        }
+        userInfo[msg.sender].push(tokenId);
+        totalAmount = totalAmount.add(_price);
+        lastTimestamp = block.timestamp;
+        uint64[keyLengthForEachBuy] memory userNumberIndex = generateNumberIndexKey(_numbers);
+        for (uint i = 0; i < keyLengthForEachBuy; i++) {
+            userBuyAmountSum[issueIndex][userNumberIndex[i]]=userBuyAmountSum[issueIndex][userNumberIndex[i]].add(_price);
+        }
+        cake.safeTransferFrom(address(msg.sender), address(this), _price);
+        emit Buy(msg.sender, tokenId);
+    }
+
+    function  multiBuy(uint256 _price, uint8[4][] memory _numbers) external {
+        require (!drawed(), 'drawed, can not buy now');
+        require (_price > minPrice, 'price must above 10');
         uint256 totalPrice  = 0;
         for (uint i = 0; i < _numbers.length; i++) {
             for (uint j = 0; j < 4; j++) {
-                require (_numbers[i][j] <= maxNumber, 'exceed the maximum');
+                require (_numbers[i][j] <= maxNumber && _numbers[i][j] > 0, 'exceed number scope');
             }
             uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers[i], _price, issueIndex);
             lotteryInfo[issueIndex].push(tokenId);
@@ -262,22 +222,22 @@ contract Lottery is LotteryOwnable, Initializable {
         emit MultiBuy(msg.sender, totalPrice);
     }
 
-    function claimReward(uint256 _tokenId) public {
+    function claimReward(uint256 _tokenId) external {
         require(msg.sender == lotteryNFT.ownerOf(_tokenId), "not from owner");
-        require (lotteryNFT.getClaimStatus(_tokenId) == false, "claimed");
+        require (!lotteryNFT.getClaimStatus(_tokenId), "claimed");
         uint256 reward = getRewardView(_tokenId);
+        lotteryNFT.claimReward(_tokenId);
         if(reward>0) {
             cake.safeTransfer(address(msg.sender), reward);
         }
-        lotteryNFT.claimReward(_tokenId);
         emit Claim(msg.sender, _tokenId, reward);
     }
 
-    function  multiClaim(uint256[] memory _tickets) public {
+    function  multiClaim(uint256[] memory _tickets) external {
         uint256 totalReward = 0;
         for (uint i = 0; i < _tickets.length; i++) {
             require (msg.sender == lotteryNFT.ownerOf(_tickets[i]), "not from owner");
-            require (lotteryNFT.getClaimStatus(_tickets[i]) == false, "claimed");
+            require (!lotteryNFT.getClaimStatus(_tickets[i]), "claimed");
             uint256 reward = getRewardView(_tickets[i]);
             if(reward>0) {
                 totalReward = reward.add(totalReward);
@@ -298,7 +258,7 @@ contract Lottery is LotteryOwnable, Initializable {
         tempNumber[3]=uint64(number[3]);
 
         uint64[keyLengthForEachBuy] memory result;
-        result[0] = tempNumber[0]*256*256*256*256*256*256 + 1*256*256*256*256*256 + tempNumber[1]*256*256*256*256 + 2*256*256*256+tempNumber[2]*256*256 + 3*256 + tempNumber[3];
+        result[0] = tempNumber[0]*256*256*256*256*256*256 + 1*256*256*256*256*256 + tempNumber[1]*256*256*256*256 + 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
 
         result[1] = tempNumber[0]*256*256*256*256 + 1*256*256*256 + tempNumber[1]*256*256 + 2*256+ tempNumber[2];
         result[2] = tempNumber[0]*256*256*256*256 + 1*256*256*256 + tempNumber[1]*256*256 + 3*256+ tempNumber[3];
@@ -308,9 +268,9 @@ contract Lottery is LotteryOwnable, Initializable {
         result[5] = tempNumber[0]*256*256 + 1*256+ tempNumber[1];
         result[6] = tempNumber[0]*256*256 + 2*256+ tempNumber[2];
         result[7] = tempNumber[0]*256*256 + 3*256+ tempNumber[3];
-        result[8] = 1*256*256*256+ tempNumber[1]*256*256 + 2*256+ tempNumber[2];
-        result[9] = 1*256*256*256+ tempNumber[1]*256*256 + 3*256+ tempNumber[3];
-        result[10] = 2*256*256*256+ tempNumber[2]*256*256 + 3*256+ tempNumber[3];
+        result[8] = 1*256*256*256 + tempNumber[1]*256*256 + 2*256+ tempNumber[2];
+        result[9] = 1*256*256*256 + tempNumber[1]*256*256 + 3*256+ tempNumber[3];
+        result[10] = 2*256*256*256 + tempNumber[2]*256*256 + 3*256+ tempNumber[3];
 
         return result;
     }
@@ -356,6 +316,8 @@ contract Lottery is LotteryOwnable, Initializable {
         uint256 _issueIndex = lotteryNFT.getLotteryIssueIndex(_tokenId);
         uint8[4] memory lotteryNumbers = lotteryNFT.getLotteryNumbers(_tokenId);
         uint8[4] memory _winningNumbers = historyNumbers[_issueIndex];
+        require(_winningNumbers[0] != 0, "not drawed");
+
         uint256 matchingNumber = 0;
         for (uint i = 0; i < lotteryNumbers.length; i++) {
             if (_winningNumbers[i] == lotteryNumbers[i]) {
@@ -382,4 +344,10 @@ contract Lottery is LotteryOwnable, Initializable {
         cake.safeTransfer(address(msg.sender), _amount);
         emit DevWithdraw(msg.sender, _amount);
     }
+
+    // Set the minimum price for one ticket
+    function setMinPrice(uint256 _price) external onlyAdmin {
+        minPrice = _price;
+    }
+
 }

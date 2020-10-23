@@ -27,7 +27,7 @@ contract LotteryNFT is ERC721, Ownable {
         lotteryInfo[newItemId] = _lotteryNumbers;
         lotteryAmount[newItemId] = _amount;
         issueIndex[newItemId] = _issueIndex;
-        claimInfo[newItemId] = false;
+        // claimInfo[newItemId] = false; default is false here
         // _setTokenURI(newItemId, tokenURI);
 
         return newItemId;
