@@ -17,7 +17,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     uint8 constant keyLengthForEachBuy = 11;
     // Allocation for first/sencond/third reward
-    uint8[3] public allocation = [60, 20, 10];
+    uint8[3] public allocation;
     // The TOKEN to buy lottery
     IERC20 public cake;
     // The Lottery NFT for tickets
@@ -27,7 +27,7 @@ contract Lottery is LotteryOwnable, Initializable {
     // maxNumber
     uint8 public maxNumber;
     // minPrice, if decimal is not 18, please reset it
-    uint256 public minPrice = uint256(10).mul(1e18);
+    uint256 public minPrice;
 
     // =================================
 
@@ -65,19 +65,22 @@ contract Lottery is LotteryOwnable, Initializable {
     function initialize(
         IERC20 _cake,
         LotteryNFT _lottery,
+        uint256 _minPrice,
         uint8 _maxNumber,
         address _owner,
         address _adminAddress
     ) public initializer {
         cake = _cake;
         lotteryNFT = _lottery;
+        minPrice = _minPrice;
         maxNumber = _maxNumber;
         adminAddress = _adminAddress;
         lastTimestamp = block.timestamp;
+        allocation = [60, 20, 10];
         initOwner(_owner);
     }
 
-    uint8[4] public nullTicket = [0,0,0,0];
+    uint8[4] private nullTicket = [0,0,0,0];
 
     modifier onlyAdmin() {
         require(msg.sender == adminAddress, "admin: wut?");
@@ -176,7 +179,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     function buy(uint256 _price, uint8[4] memory _numbers) external {
         require (!drawed(), 'drawed, can not buy now');
-        require (_price > minPrice, 'price must above 10');
+        require (_price >= minPrice, 'price must above minPrice');
         for (uint i = 0; i < 4; i++) {
             require (_numbers[i] <= maxNumber && _numbers[i] > 0, 'exceed number scope');
         }
@@ -198,7 +201,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     function  multiBuy(uint256 _price, uint8[4][] memory _numbers) external {
         require (!drawed(), 'drawed, can not buy now');
-        require (_price > minPrice, 'price must above 10');
+        require (_price >= minPrice, 'price must above minPrice');
         uint256 totalPrice  = 0;
         for (uint i = 0; i < _numbers.length; i++) {
             for (uint j = 0; j < 4; j++) {
