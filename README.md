@@ -3,6 +3,7 @@
 ## Install dependency
 
 ```shell script
+npm i @openzeppelin/contracts
 npm i @pancakeswap/pancake-swap-lib
 npm install
 ```

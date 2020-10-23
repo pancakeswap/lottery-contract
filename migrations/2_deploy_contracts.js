@@ -1,21 +1,57 @@
 const Lottery = artifacts.require("Lottery");
 const MockBEP20 = artifacts.require("MockBEP20");
 const LotteryNFT = artifacts.require("LotteryNFT");
+const LotteryUpgradeProxy = artifacts.require("LotteryUpgradeProxy");
 
-const adminAddress = '0xB9FA21a62FC96Cb2aC635a051061E2E50d964051'
+const Web3 = require('web3');
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
-module.exports = async function(deployer) {
-  // await deployer.deploy(LotteryNFT)
-  // const nft = await LotteryNFT.deployed();
-  // const cake = await MockBEP20.at('0x43acC9A5E94905c7D31415EB410F3E666e5F1e9A');
-  // await deployer.deploy(Lottery, cake.address, nft.address, '10', adminAddress)
-  // const lottery = await Lottery.deployed();
-  // await nft.transferOwnership(lottery.address)
 
-  // const lottery = await Lottery.deployed()
-  // await lottery.drawing()
-  // await lottery.reset()
-}
+module.exports = async function(deployer, network, accounts) {
+    await deployer.deploy(LotteryNFT);
+    await deployer.deploy(MockBEP20, "Pancake", "cake", "100000000000000000000000000");
+    await deployer.deploy(Lottery);
+
+    proxyAdmin=accounts[9];
+    lotteryOwner=accounts[7];
+    alice=accounts[1];
+    admin=alice;
+    const abiEncodeData = web3.eth.abi.encodeFunctionCall({
+        "inputs": [
+            {
+                "internalType": "contract IERC20",
+                "name": "_cake",
+                "type": "address"
+            },
+            {
+                "internalType": "contract LotteryNFT",
+                "name": "_lottery",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_maxNumber",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "_owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_adminAddress",
+                "type": "address"
+            }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }, [MockBEP20.address, LotteryNFT.address, 4, lotteryOwner, admin]);
+
+    await deployer.deploy(LotteryUpgradeProxy, Lottery.address, proxyAdmin, abiEncodeData);
+};
 
 
 

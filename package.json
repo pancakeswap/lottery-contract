@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "testrpc": "ganache-cli --gasLimit 13000000 -e 100000 --networkId 666",
     "migrate": "truffle migrate --network bscTestnet --reset",
     "compile": "truffle compile --network bscTestnet",
-    "test": "npx builder test"
+    "test": "rm -rf contracts/flattened/*.sol && truffle test",
+    "flatten": "truffle-flattener contracts/Lottery.sol > contracts/flattened/Lottery.sol && truffle-flattener contracts/LotteryNFT.sol > contracts/flattened/LotteryNFT.sol && truffle-flattener contracts/LotteryUpgradeProxy.sol > contracts/flattened/LotteryUpgradeProxy.sol"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.2.0",
     "@openzeppelin/test-helpers": "^0.5.6",
+    "@pancakeswap/pancake-swap-lib": "0.0.2",
     "truffle": "^5.1.41"
   },
   "devDependencies": {
@@ -27,4 +30,3 @@
     "truffle-flattener": "^1.4.4"
   }
 }
-
