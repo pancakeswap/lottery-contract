@@ -343,7 +343,7 @@ contract Lottery is LotteryOwnable, Initializable {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function adminWithdraw(uint256 _amount) public onlyOwner {
+    function adminWithdraw(uint256 _amount) public onlyAdmin {
         cake.safeTransfer(address(msg.sender), _amount);
         emit DevWithdraw(msg.sender, _amount);
     }
