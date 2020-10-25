@@ -181,7 +181,7 @@ contract Lottery is LotteryOwnable, Initializable {
         require (!drawed(), 'drawed, can not buy now');
         require (_price >= minPrice, 'price must above minPrice');
         for (uint i = 0; i < 4; i++) {
-            require (_numbers[i] <= maxNumber && _numbers[i] > 0, 'exceed number scope');
+            require (_numbers[i] <= maxNumber, 'exceed number scope');
         }
         uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers, _price, issueIndex);
         lotteryInfo[issueIndex].push(tokenId);
