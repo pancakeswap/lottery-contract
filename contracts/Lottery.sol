@@ -108,7 +108,7 @@ contract Lottery is LotteryOwnable, Initializable {
         emit Reset(issueIndex);
     }
 
-    function drawing() external onlyAdmin {
+    function drawing(uint256 _externalRandomNumber) external onlyAdmin {
         require(!drawed(), "reset?");
         bytes32 _structHash;
         uint256 _randomNumber;
@@ -119,7 +119,8 @@ contract Lottery is LotteryOwnable, Initializable {
         _structHash = keccak256(
             abi.encode(
                 _blockhash,
-                totalAddresses
+                totalAddresses,
+                _externalRandomNumber
             )
         );
         _randomNumber  = uint256(_structHash);
@@ -130,7 +131,8 @@ contract Lottery is LotteryOwnable, Initializable {
         _structHash = keccak256(
             abi.encode(
                 _blockhash,
-                totalAmount
+                totalAmount,
+                _externalRandomNumber
             )
         );
         _randomNumber  = uint256(_structHash);
@@ -141,7 +143,8 @@ contract Lottery is LotteryOwnable, Initializable {
         _structHash = keccak256(
             abi.encode(
                 _blockhash,
-                lastTimestamp
+                lastTimestamp,
+                _externalRandomNumber
             )
         );
         _randomNumber  = uint256(_structHash);
@@ -152,7 +155,8 @@ contract Lottery is LotteryOwnable, Initializable {
         _structHash = keccak256(
             abi.encode(
                 _blockhash,
-                block.difficulty
+                block.difficulty,
+                _externalRandomNumber
             )
         );
         _randomNumber  = uint256(_structHash);
