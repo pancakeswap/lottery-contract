@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 
+// import "@nomiclabs/buidler/console.sol";
 
 // 4 numbers
 contract Lottery is LotteryOwnable, Initializable {
@@ -108,18 +109,21 @@ contract Lottery is LotteryOwnable, Initializable {
         emit Reset(issueIndex);
     }
 
+    // add externalRandomNumber to prevent node validators exploiting
     function drawing(uint256 _externalRandomNumber) external onlyAdmin {
         require(!drawed(), "reset?");
         bytes32 _structHash;
         uint256 _randomNumber;
         uint8 _maxNumber = maxNumber;
         bytes32 _blockhash = blockhash(block.number-1);
+        uint256 gasleft = gasleft();
 
         // 1
         _structHash = keccak256(
             abi.encode(
                 _blockhash,
                 totalAddresses,
+                gasleft,
                 _externalRandomNumber
             )
         );
@@ -132,6 +136,7 @@ contract Lottery is LotteryOwnable, Initializable {
             abi.encode(
                 _blockhash,
                 totalAmount,
+                gasleft,
                 _externalRandomNumber
             )
         );
@@ -144,6 +149,7 @@ contract Lottery is LotteryOwnable, Initializable {
             abi.encode(
                 _blockhash,
                 lastTimestamp,
+                gasleft,
                 _externalRandomNumber
             )
         );
@@ -155,7 +161,7 @@ contract Lottery is LotteryOwnable, Initializable {
         _structHash = keccak256(
             abi.encode(
                 _blockhash,
-                block.difficulty,
+                gasleft,
                 _externalRandomNumber
             )
         );
