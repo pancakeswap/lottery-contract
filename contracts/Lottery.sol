@@ -50,6 +50,9 @@ contract Lottery is LotteryOwnable, Initializable {
 
     uint8[4] public winningNumbers;
 
+    // default false
+    bool public drawingPhase;
+
     // =================================
 
     event Buy(address indexed user, uint256 tokenId);
@@ -101,6 +104,7 @@ contract Lottery is LotteryOwnable, Initializable {
         winningNumbers[1]=0;
         winningNumbers[2]=0;
         winningNumbers[3]=0;
+        drawingPhase = false;
         issueIndex = issueIndex +1;
         if(getMatchingRewardAmount(issueIndex-1, 4) == 0) {
             uint256 amount = getTotalRewards(issueIndex-1).mul(allocation[0]).div(100);
@@ -109,13 +113,24 @@ contract Lottery is LotteryOwnable, Initializable {
         emit Reset(issueIndex);
     }
 
+    function enterDrawingPhase() external onlyAdmin {
+        require(!drawed(), 'drawed');
+        drawingPhase = true;
+    }
+
     // add externalRandomNumber to prevent node validators exploiting
     function drawing(uint256 _externalRandomNumber) external onlyAdmin {
         require(!drawed(), "reset?");
+        require(drawingPhase, "enter drawing phase first");
         bytes32 _structHash;
         uint256 _randomNumber;
         uint8 _maxNumber = maxNumber;
         bytes32 _blockhash = blockhash(block.number-1);
+
+        // waste some gas fee here
+        for (uint i = 0; i < 10; i++) {
+            getTotalRewards(issueIndex);
+        }
         uint256 gasleft = gasleft();
 
         // 1
@@ -168,9 +183,9 @@ contract Lottery is LotteryOwnable, Initializable {
         _randomNumber  = uint256(_structHash);
         assembly {_randomNumber := add(mod(_randomNumber, _maxNumber),1)}
         winningNumbers[3]=uint8(_randomNumber);
-
         historyNumbers[issueIndex] = winningNumbers;
         historyAmount[issueIndex] = calculateMatchingRewardAmount();
+        drawingPhase = false;
         emit Drawing(issueIndex, winningNumbers);
     }
 
@@ -188,7 +203,8 @@ contract Lottery is LotteryOwnable, Initializable {
     }
 
     function buy(uint256 _price, uint8[4] memory _numbers) external {
-        require (!drawed(), 'drawed, can not buy now');
+        require(!drawed(), 'drawed, can not buy now');
+        require(!drawingPhase, 'drawing, can not buy now');
         require (_price >= minPrice, 'price must above minPrice');
         for (uint i = 0; i < 4; i++) {
             require (_numbers[i] <= maxNumber, 'exceed number scope');
