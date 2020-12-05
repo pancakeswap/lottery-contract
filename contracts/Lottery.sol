@@ -384,4 +384,9 @@ contract Lottery is LotteryOwnable, Initializable {
         maxNumber = _maxNumber;
     }
 
+    // Set the allocation for one reward
+    function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3) external onlyAdmin {
+        allocation = [_allcation1, _allcation2, _allcation3];
+    }
+
 }
