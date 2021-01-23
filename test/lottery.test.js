@@ -4,10 +4,13 @@ const MockBEP20 = artifacts.require('MockBEP20');
 const LotteryNFT = artifacts.require('LotteryNFT');
 const LotteryUpgradeProxy = artifacts.require("LotteryUpgradeProxy");
 
+const chai = require("chai");
 const fs = require('fs');
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 
+chai.use(solidity);
+const { expect } = chai;
 
 contract('Lottery', (accounts) => {
     it('init', async () => {
@@ -129,6 +132,30 @@ contract('Lottery', (accounts) => {
         // console.log((await this.nft.tokenOfOwnerByIndex(bob, 0, {from: bob })).toString())
         // console.log((await this.nft.tokenOfOwnerByIndex(alice, 0, {from: bob })).toString())
 
+    });
+
+    it("batch mint multiple tickes", async () => {
+        const LotteryContract = this.lotteryProxy.methods;
+        const async = [
+            await LotteryContract.newBatchLotteryItem([alice,bob,carol],[1, 2, 3],[10 ** 5, 10 ** 4, 10 ** 3]),
+            await LotteryContract.balanceOfBatch(
+                [alice,bob,carol],
+                [1, 2, 3]
+            ),
+        ];
+        const [_, balance] = await Promise.all(async);
+        expect(balance[0]).to.eq(10 ** 5);
+        expect(balance[1]).to.eq(10 ** 4);
+        expect(balance[2]).to.eq(10 ** 3); 
+        const tokenSupplies = [
+            LotteryContract.tokenSupply(1),
+            LotteryContract.tokenSupply(2),
+            LotteryContract.tokenSupply(3),
+        ];
+        const tokenSupply = await Promise.all(tokenSupplies);
+        expect(tokenSupply[0]).to.eq(10 ** 5);
+        expect(tokenSupply[1]).to.eq(10 ** 4);
+        expect(tokenSupply[2]).to.eq(10 ** 3);
     });
 
 });
