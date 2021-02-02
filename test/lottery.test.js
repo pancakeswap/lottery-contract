@@ -138,7 +138,7 @@ contract('Lottery', (accounts) => {
         const LotteryContract = this.lotteryProxy.methods;
         const async = [
             await LotteryContract.newBatchLotteryItem([alice,bob,carol],[1, 2, 3],[10 ** 5, 10 ** 4, 10 ** 3]),
-            await LotteryContract.balanceOfBatch(
+            await LotteryContract.getBalanceBatch(
                 [alice,bob,carol],
                 [1, 2, 3]
             ),

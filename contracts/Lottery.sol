@@ -235,7 +235,7 @@ contract Lottery is LotteryOwnable, Initializable {
             for (uint j = 0; j < 4; j++) {
                 require (_numbers[i][j] <= maxNumber && _numbers[i][j] > 0, 'exceed number scope');
             }
-            uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers[i], _price, issueIndex);
+            uint256 tokenId = lotteryNFT.newBatchLotteryItem(_numbers[i], msg.sender, _numbers[i], _price, issueIndex);
             lotteryInfo[issueIndex].push(tokenId);
             if (userInfo[msg.sender].length == 0) {
                 totalAddresses = totalAddresses + 1;

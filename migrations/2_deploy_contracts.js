@@ -6,8 +6,10 @@ const LotteryUpgradeProxy = artifacts.require("LotteryUpgradeProxy");
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider('https://data-seed-prebsc-1-s1.binance.org:8545'));
 
+const URI = 'https://pancakeswap.finance/lottery/{tokenId}';
+
 module.exports = async function(deployer) {
-    await deployer.deploy(LotteryNFT);
+    await deployer.deploy(LotteryNFT, URI);
     const cake = await MockBEP20.at('0x43acC9A5E94905c7D31415EB410F3E666e5F1e9A');
     await deployer.deploy(Lottery);
 

@@ -25,35 +25,15 @@ contract LotteryNFT is ERC1155, Ownable {
     mapping (uint256 => uint256) public issueIndex;
     mapping (uint256 => bool) public claimInfo;
 
-
-    event Ticket(
-        address indexed _player,
-        uint256 indexed _id,
-        uint256 indexed _amount
-    );
-
-    event TicketBatch(
-        address indexed _player,
-        uint256[] indexed _ids,
-        uint256[] indexed _amounts
-    );
-
-    modifier onlyManager() {
-        require(msg.sender == manager, "caller is not the manager");
-        _;
-    }
-
     constructor(
-        string memory _newURI,
-        address payable _deployerAddress
+        string memory _newURI, 
     ) public ERC1155(_newURI) {
         name;
         symbol;
-        manager = _deployerAddress;
     }
 
     function newLotteryItem(address player, uint8[4] memory _lotteryNumbers, uint256 _amount, uint256 _issueIndex)
-        public onlyManager()
+        public onlyOwner
         returns (uint256)
     {
         _tokenIds.increment();
@@ -64,30 +44,23 @@ contract LotteryNFT is ERC1155, Ownable {
         issueIndex[newItemId] = _issueIndex;
         // claimInfo[newItemId] = false; default is false here
         // _setTokenURI(newItemId, tokenURI);
-        
-        emit Ticket(player, newItemId, _amount);
         return newItemId;
-        
     }
 
-    function newBatchLotteryItem(uint256[] memory _ids, address player, uint8[4] memory _lotteryNumbers, uint256[] memory _amounts, uint256[] memory _issueIndexs)
-        public onlyManager()
+    function newBatchLotteryItem(uint256[] memory _ids, address player, uint8[4][] memory _lotteryNumbers, uint256[] memory _amounts, uint256[] memory _issueIndexs)
+        public onlyOwner
         returns (uint256[] memory)
     {
         uint256[] memory lotteryItemIds;
+        _mintBatch(player, lotteryItemIds, _amounts, "");
         for (uint256 i = 0; i < _ids.length; i++) {
             _tokenIds.increment();
             lotteryItemIds[i] =  _tokenIds.current();
-        }
-        _mintBatch(player, lotteryItemIds, _amounts, "");
-        for (uint256 i = 0; i < _ids.length; i++) {
             lotteryInfo[lotteryItemIds[i]] = _lotteryNumbers;
             lotteryAmount[lotteryItemIds[i]] = _amounts[i];
             issueIndex[lotteryItemIds[i]] = _issueIndexs[i];
         }
-        emit TicketBatch(player, _ids, _amounts) ;
         return lotteryItemIds;
-        
     }
     function getLotteryNumbers(uint256 tokenId) external view returns (uint8[4] memory) {
         return lotteryInfo[tokenId];
@@ -98,25 +71,29 @@ contract LotteryNFT is ERC1155, Ownable {
     function getLotteryIssueIndex(uint256 tokenId) external view returns (uint256) {
         return issueIndex[tokenId];
     }
-    function claimReward(uint256 tokenId) external onlyManager() {
+    function claimReward(uint256 tokenId) external onlyOwner {
         claimInfo[tokenId] = true;
     }
-    function multiClaimReward(uint256[] calldata _ids) external onlyManager() {
+    function multiClaimReward(uint256[] calldata _ids) external onlyOwner {
         for (uint i = 0; i < _ids.length; i++) {
             claimInfo[_ids[i]] = true;
         }
     }
-    function burn(address player, uint256 tokenId, uint256 amount) external onlyManager() {
+    function burn(address player, uint256 tokenId, uint256 amount) external onlyOwner {
         _burn(player, tokenId, amount);
     }
-    function multiBurn(address player, uint256[] calldata _ids, uint256[] memory amounts) external onlyManager() {
+    function multiBurn(address player, uint256[] calldata _ids, uint256[] memory amounts) external onlyOwner {
         _burnBatch(player, _ids, amounts); 
     }
     function getClaimStatus(uint256 tokenId) external view returns (bool) {
         return claimInfo[tokenId];
     }
     // Used as the URI for all tickets types by relying on ID substitution, e.g. https://pancakeswap.finance/lottery/tickets{id}.json
-    function setURI(string memory _newURI) public onlyManager() {
+    function setURI(string memory _newURI) public onlyOwner {
         _setURI(_newURI);
+    }
+    // balanceOfBatch Multiple accounts
+    function getBalanceBatch(address[] players, uint256[] calldata _ids) external onlyOwner {
+        balanceOfBatch(players, _ids);
     }
 }
