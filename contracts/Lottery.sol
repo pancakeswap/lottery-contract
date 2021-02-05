@@ -1,4 +1,6 @@
-pragma solidity 0.6.12;
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./LotteryNFT.sol";
@@ -189,7 +191,7 @@ contract Lottery is LotteryOwnable, Initializable {
         emit Drawing(issueIndex, winningNumbers);
     }
 
-    function internalBuy(uint256 _price, uint8[4] memory _numbers) internal {
+    function internalBuy( uint256 _price, uint8[4] memory _numbers) internal {
         require (!drawed(), 'drawed, can not buy now');
         for (uint i = 0; i < 4; i++) {
             require (_numbers[i] <= maxNumber, 'exceed the maximum');
@@ -233,7 +235,7 @@ contract Lottery is LotteryOwnable, Initializable {
             for (uint j = 0; j < 4; j++) {
                 require (_numbers[i][j] <= maxNumber && _numbers[i][j] > 0, 'exceed number scope');
             }
-            uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers[i], _price, issueIndex);
+            uint256 tokenId = lotteryNFT.newBatchLotteryItem(_numbers[i], msg.sender, _numbers[i], _price, issueIndex);
             lotteryInfo[issueIndex].push(tokenId);
             if (userInfo[msg.sender].length == 0) {
                 totalAddresses = totalAddresses + 1;
@@ -252,7 +254,7 @@ contract Lottery is LotteryOwnable, Initializable {
     }
 
     function claimReward(uint256 _tokenId) external {
-        require(msg.sender == lotteryNFT.ownerOf(_tokenId), "not from owner");
+        // require(msg.sender == lotteryNFT.ownerOf(_tokenId), "not from owner");
         require (!lotteryNFT.getClaimStatus(_tokenId), "claimed");
         uint256 reward = getRewardView(_tokenId);
         lotteryNFT.claimReward(_tokenId);
@@ -265,7 +267,7 @@ contract Lottery is LotteryOwnable, Initializable {
     function  multiClaim(uint256[] memory _tickets) external {
         uint256 totalReward = 0;
         for (uint i = 0; i < _tickets.length; i++) {
-            require (msg.sender == lotteryNFT.ownerOf(_tickets[i]), "not from owner");
+            // require (msg.sender == lotteryNFT.ownerOf(_tickets[i]), "not from owner");
             require (!lotteryNFT.getClaimStatus(_tickets[i]), "claimed");
             uint256 reward = getRewardView(_tickets[i]);
             if(reward>0) {
