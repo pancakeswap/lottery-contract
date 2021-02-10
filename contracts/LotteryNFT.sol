@@ -1,11 +1,11 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract LotteryNFT is ERC721, Ownable {
+contract LotteryNFT is ERC1155, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
@@ -23,7 +23,7 @@ contract LotteryNFT is ERC721, Ownable {
         _tokenIds.increment();
 
         uint256 newItemId = _tokenIds.current();
-        _mint(player, newItemId);
+        _mint(player, newItemId, 1);
         lotteryInfo[newItemId] = _lotteryNumbers;
         lotteryAmount[newItemId] = _amount;
         issueIndex[newItemId] = _issueIndex;
