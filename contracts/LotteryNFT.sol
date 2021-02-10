@@ -33,6 +33,25 @@ contract LotteryNFT is ERC1155, Ownable {
         return newItemId;
     }
 
+    function batchNewLotteryItem(address player, uint8[4][] memory _lotteryNumbers, uint256 _amount, uint256 _issueIndex)
+        public onlyOwner
+        returns (uint256[] memory)
+    {
+        uint256[] memory newItemIds;
+        uint256[] memory prices;
+        for (uint i = 0; i < _numbers.length; i ++) {
+            _tokenIds.increment();
+            uint256 newItemId = _tokenIds.current();
+            newItemIds[i] = newItemId
+            lotteryInfo[newItemId] = _lotteryNumbers[i];
+            lotteryAmount[newItemId] = _amount;
+            issueIndex[newItemId] = _issueIndex;
+            prices[i] = _amount;
+        }
+        _mintBatch(player, newItemIds, prices)
+        return newItemIds
+    }
+
     function getLotteryNumbers(uint256 tokenId) external view returns (uint8[4] memory) {
         return lotteryInfo[tokenId];
     }

@@ -233,20 +233,24 @@ contract Lottery is LotteryOwnable, Initializable {
             for (uint j = 0; j < 4; j++) {
                 require (_numbers[i][j] <= maxNumber && _numbers[i][j] > 0, 'exceed number scope');
             }
-            uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers[i], _price, issueIndex);
-            lotteryInfo[issueIndex].push(tokenId);
+        }
+        
+        uint256[] tokenIds = lotteryNFT.batchNewLotteryItem(msg.sender, _numbers, _price, issueIndex);
+
+        for (uint i = 0; i < tokenIds.length; i ++) {
+            lotteryInfo[issueIndex].push(tokenIds[i]);
             if (userInfo[msg.sender].length == 0) {
                 totalAddresses = totalAddresses + 1;
             }
-            userInfo[msg.sender].push(tokenId);
+            userInfo[msg.sender].push(tokenIds[i]);
             totalAmount = totalAmount.add(_price);
-            lastTimestamp = block.timestamp;
             totalPrice = totalPrice.add(_price);
             uint64[keyLengthForEachBuy] memory numberIndexKey = generateNumberIndexKey(_numbers[i]);
             for (uint k = 0; k < keyLengthForEachBuy; k++) {
                 userBuyAmountSum[issueIndex][numberIndexKey[k]]=userBuyAmountSum[issueIndex][numberIndexKey[k]].add(_price);
             }
         }
+        lastTimestamp = block.timestamp;
         cake.safeTransferFrom(address(msg.sender), address(this), totalPrice);
         emit MultiBuy(msg.sender, totalPrice);
     }
