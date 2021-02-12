@@ -13,6 +13,7 @@ contract LotteryRewardProxy {
     Lottery public lottery;
     IERC20 public cake;
     address public adminAddress;
+    address internal constant DeadAddress = 0x000000000000000000000000000000000000dEaD;
 
     constructor(
         Lottery _lottery,
