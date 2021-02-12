@@ -354,7 +354,7 @@ contract Lottery is LotteryOwnable, Initializable {
             }
         }
         uint256 reward = 0;
-        if (matchingNumber >= 1) {
+        if (matchingNumber > 0) {
             uint256 amount = lotteryNFT.getLotteryAmount(_tokenId);
             uint256 poolAmount = getTotalRewards(_issueIndex).mul(allocation[4-matchingNumber]).div(100);
             reward = amount.mul(1e12).div(getMatchingRewardAmount(_issueIndex, matchingNumber)).mul(poolAmount);
@@ -386,6 +386,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     // Set the allocation for one reward
     function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3, uint8 _allcation4) external onlyAdmin {
+        require (_allcation1 + _allcation2 + _allcation3 + _allcation4 < 100, 'exceed 100');
         allocation = [_allcation1, _allcation2, _allcation3, _allcation4];
     }
 
