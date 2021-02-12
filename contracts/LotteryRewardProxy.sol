@@ -2,7 +2,10 @@ pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./Lottery.sol";
+
+interface Lottery {
+    function buy(uint256 _price, uint8[4] memory _numbers) external;
+}
 
 contract LotteryRewardProxy {
     using SafeERC20 for IERC20;
@@ -10,6 +13,7 @@ contract LotteryRewardProxy {
     Lottery public lottery;
     IERC20 public cake;
     address public adminAddress;
+    address internal constant DeadAddress = 0x000000000000000000000000000000000000dEaD;
 
     constructor(
         Lottery _lottery,
@@ -33,6 +37,11 @@ contract LotteryRewardProxy {
     function inject(uint256 _amount) external onlyAdmin {
         cake.safeApprove(address(lottery), _amount);
         lottery.buy(_amount, nullTicket);
+        emit Inject(_amount);
+    }
+
+    function burn(uint256 _amount) external onlyAdmin {
+        cake.safeTransfer(DeadAddress, _amount);
         emit Inject(_amount);
     }
 
