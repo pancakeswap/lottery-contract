@@ -18,7 +18,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     uint8 constant keyLengthForEachBuy = 15;
     // Allocation for first/sencond/third reward
-
+    uint8[4] public allocation;
     // The TOKEN to buy lottery
     IERC20 public cake;
     // The Lottery NFT for tickets
