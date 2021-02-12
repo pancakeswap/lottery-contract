@@ -335,7 +335,7 @@ contract Lottery is LotteryOwnable, Initializable {
         sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[13]]);
         sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[14]]);
 
-        uint256 totalAmout4 = sumForTotalAmout4.add(totalAmout2.mul(3)).sub(sumForTotalAmout1.mul(4)).sub(sumForTotalAmout3.mul(2));
+        uint256 totalAmout4 = sumForTotalAmout4.add(sumForTotalAmout2.mul(3)).sub(totalAmout1.mul(4)).sub(sumForTotalAmout3.mul(2));
 
         return [totalAmount, totalAmout1, totalAmout2, totalAmout3, totalAmout4];
     }
