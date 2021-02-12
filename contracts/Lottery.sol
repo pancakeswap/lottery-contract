@@ -301,10 +301,10 @@ contract Lottery is LotteryOwnable, Initializable {
         result[9] = 1*256*256*256 + tempNumber[1]*256*256 + 3*256 + tempNumber[3];
         result[10] = 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
 
-        result[11] = tempNumber[0];
-        result[12] = tempNumber[1];
-        result[13] = tempNumber[2];
-        result[14] = tempNumber[3];
+        result[11] = 0*256 + tempNumber[0];
+        result[12] = 1*256 + tempNumber[1];
+        result[13] = 2*256 + tempNumber[2];
+        result[14] = 3*256 + tempNumber[3];
 
         return result;
     }
