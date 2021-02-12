@@ -25,6 +25,7 @@ contract LotteryRewardProxy {
     }
 
     event Inject(uint256 amount);
+    event Withdraw(uint256 amount);
 
     uint8[4] private nullTicket = [0,0,0,0];
 
@@ -41,7 +42,7 @@ contract LotteryRewardProxy {
 
     function adminWithdraw(uint256 _amount) external onlyAdmin {
         cake.safeTransfer(address(msg.sender), _amount);
-        emit Inject(_amount);
+        emit Withdraw(_amount);
     }
 
     function setAdmin(address _adminAddress) external onlyAdmin {
