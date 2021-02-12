@@ -16,9 +16,9 @@ contract Lottery is LotteryOwnable, Initializable {
     using SafeMath for uint8;
     using SafeERC20 for IERC20;
 
-    uint8 constant keyLengthForEachBuy = 11;
+    uint8 constant keyLengthForEachBuy = 15;
     // Allocation for first/sencond/third reward
-    uint8[4] public allocation;
+
     // The TOKEN to buy lottery
     IERC20 public cake;
     // The Lottery NFT for tickets
@@ -301,10 +301,15 @@ contract Lottery is LotteryOwnable, Initializable {
         result[9] = 1*256*256*256 + tempNumber[1]*256*256 + 3*256 + tempNumber[3];
         result[10] = 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
 
+        result[11] = tempNumber[0];
+        result[12] = tempNumber[1];
+        result[13] = tempNumber[2];
+        result[14] = tempNumber[3];
+
         return result;
     }
 
-    function calculateMatchingRewardAmount() internal view returns (uint256[4] memory) {
+    function calculateMatchingRewardAmount() internal view returns (uint256[5] memory) {
         uint64[keyLengthForEachBuy] memory numberIndexKey = generateNumberIndexKey(winningNumbers);
 
         uint256 totalAmout1 = userBuyAmountSum[issueIndex][numberIndexKey[0]];
@@ -325,7 +330,14 @@ contract Lottery is LotteryOwnable, Initializable {
 
         uint256 totalAmout3 = sumForTotalAmout3.add(totalAmout1.mul(6)).sub(sumForTotalAmout2.mul(3));
 
-        return [totalAmount, totalAmout1, totalAmout2, totalAmout3];
+        uint256 sumForTotalAmout4 = userBuyAmountSum[issueIndex][numberIndexKey[11]];
+        sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[12]]);
+        sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[13]]);
+        sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[14]]);
+
+        uint256 totalAmout4 = sumForTotalAmout4.add(totalAmout2.mul(3)).sub(sumForTotalAmout1.mul(4)).sub(sumForTotalAmout3.mul(2));
+
+        return [totalAmount, totalAmout1, totalAmout2, totalAmout3, totalAmout4];
     }
 
     function getMatchingRewardAmount(uint256 _issueIndex, uint256 _matchingNumber) public view returns (uint256) {
