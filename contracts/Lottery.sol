@@ -389,6 +389,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     // Set the allocation for one reward
     function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3) external onlyAdmin {
+        require (_allcation1 + _allcation2 + _allcation3 < 100, 'exceed 100');
         allocation = [_allcation1, _allcation2, _allcation3];
     }
 
