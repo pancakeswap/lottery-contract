@@ -16,9 +16,9 @@ contract Lottery is LotteryOwnable, Initializable {
     using SafeMath for uint8;
     using SafeERC20 for IERC20;
 
-    uint8 constant keyLengthForEachBuy = 15;
+    uint8 constant keyLengthForEachBuy = 11;
     // Allocation for first/sencond/third reward
-    uint8[4] public allocation;
+    uint8[3] public allocation;
     // The TOKEN to buy lottery
     IERC20 public cake;
     // The Lottery NFT for tickets
@@ -80,7 +80,7 @@ contract Lottery is LotteryOwnable, Initializable {
         maxNumber = _maxNumber;
         adminAddress = _adminAddress;
         lastTimestamp = block.timestamp;
-        allocation = [50, 20, 10, 5];
+        allocation = [60, 20, 10];
         initOwner(_owner);
     }
 
@@ -88,6 +88,12 @@ contract Lottery is LotteryOwnable, Initializable {
 
     modifier onlyAdmin() {
         require(msg.sender == adminAddress, "admin: wut?");
+        _;
+    }
+
+    modifier inDrawingPhase() {
+        require(!drawed(), 'drawed, can not buy now');
+        require(!drawingPhase, 'drawing, can not buy now');
         _;
     }
 
@@ -202,9 +208,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     }
 
-    function buy(uint256 _price, uint8[4] memory _numbers) external {
-        require(!drawed(), 'drawed, can not buy now');
-        require(!drawingPhase, 'drawing, can not buy now');
+    function buy(uint256 _price, uint8[4] memory _numbers) external inDrawingPhase {
         require (_price >= minPrice, 'price must above minPrice');
         for (uint i = 0; i < 4; i++) {
             require (_numbers[i] <= maxNumber, 'exceed number scope');
@@ -225,8 +229,7 @@ contract Lottery is LotteryOwnable, Initializable {
         emit Buy(msg.sender, tokenId);
     }
 
-    function  multiBuy(uint256 _price, uint8[4][] memory _numbers) external {
-        require (!drawed(), 'drawed, can not buy now');
+    function  multiBuy(uint256 _price, uint8[4][] memory _numbers) external inDrawingPhase {
         require (_price >= minPrice, 'price must above minPrice');
         uint256 totalPrice  = 0;
         for (uint i = 0; i < _numbers.length; i++) {
@@ -301,15 +304,10 @@ contract Lottery is LotteryOwnable, Initializable {
         result[9] = 1*256*256*256 + tempNumber[1]*256*256 + 3*256 + tempNumber[3];
         result[10] = 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
 
-        result[11] = 0*256 + tempNumber[0];
-        result[12] = 1*256 + tempNumber[1];
-        result[13] = 2*256 + tempNumber[2];
-        result[14] = 3*256 + tempNumber[3];
-
         return result;
     }
 
-    function calculateMatchingRewardAmount() internal view returns (uint256[5] memory) {
+    function calculateMatchingRewardAmount() internal view returns (uint256[4] memory) {
         uint64[keyLengthForEachBuy] memory numberIndexKey = generateNumberIndexKey(winningNumbers);
 
         uint256 totalAmout1 = userBuyAmountSum[issueIndex][numberIndexKey[0]];
@@ -330,14 +328,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
         uint256 totalAmout3 = sumForTotalAmout3.add(totalAmout1.mul(6)).sub(sumForTotalAmout2.mul(3));
 
-        uint256 sumForTotalAmout4 = userBuyAmountSum[issueIndex][numberIndexKey[11]];
-        sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[12]]);
-        sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[13]]);
-        sumForTotalAmout4 = sumForTotalAmout4.add(userBuyAmountSum[issueIndex][numberIndexKey[14]]);
-
-        uint256 totalAmout4 = sumForTotalAmout4.add(sumForTotalAmout2.mul(3)).sub(totalAmout1.mul(4)).sub(sumForTotalAmout3.mul(2));
-
-        return [totalAmount, totalAmout1, totalAmout2, totalAmout3, totalAmout4];
+        return [totalAmount, totalAmout1, totalAmout2, totalAmout3];
     }
 
     function getMatchingRewardAmount(uint256 _issueIndex, uint256 _matchingNumber) public view returns (uint256) {
@@ -366,7 +357,7 @@ contract Lottery is LotteryOwnable, Initializable {
             }
         }
         uint256 reward = 0;
-        if (matchingNumber > 0) {
+        if (matchingNumber > 1) {
             uint256 amount = lotteryNFT.getLotteryAmount(_tokenId);
             uint256 poolAmount = getTotalRewards(_issueIndex).mul(allocation[4-matchingNumber]).div(100);
             reward = amount.mul(1e12).div(getMatchingRewardAmount(_issueIndex, matchingNumber)).mul(poolAmount);
@@ -397,9 +388,8 @@ contract Lottery is LotteryOwnable, Initializable {
     }
 
     // Set the allocation for one reward
-    function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3, uint8 _allcation4) external onlyAdmin {
-        require (_allcation1 + _allcation2 + _allcation3 + _allcation4 < 100, 'exceed 100');
-        allocation = [_allcation1, _allcation2, _allcation3, _allcation4];
+    function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3) external onlyAdmin {
+        allocation = [_allcation1, _allcation2, _allcation3];
     }
 
 }
