@@ -18,7 +18,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     uint8 constant keyLengthForEachBuy = 11;
     // Allocation for first/sencond/third reward
-    uint8[4] public allocation;
+    uint8[3] public allocation;
     // The TOKEN to buy lottery
     IERC20 public cake;
     // The Lottery NFT for tickets
@@ -80,7 +80,7 @@ contract Lottery is LotteryOwnable, Initializable {
         maxNumber = _maxNumber;
         adminAddress = _adminAddress;
         lastTimestamp = block.timestamp;
-        allocation = [50, 20, 10, 5];
+        allocation = [60, 20, 10];
         initOwner(_owner);
     }
 
@@ -88,6 +88,12 @@ contract Lottery is LotteryOwnable, Initializable {
 
     modifier onlyAdmin() {
         require(msg.sender == adminAddress, "admin: wut?");
+        _;
+    }
+
+    modifier inDrawingPhase() {
+        require(!drawed(), 'drawed, can not buy now');
+        require(!drawingPhase, 'drawing, can not buy now');
         _;
     }
 
@@ -202,9 +208,7 @@ contract Lottery is LotteryOwnable, Initializable {
 
     }
 
-    function buy(uint256 _price, uint8[4] memory _numbers) external {
-        require(!drawed(), 'drawed, can not buy now');
-        require(!drawingPhase, 'drawing, can not buy now');
+    function buy(uint256 _price, uint8[4] memory _numbers) external inDrawingPhase {
         require (_price >= minPrice, 'price must above minPrice');
         for (uint i = 0; i < 4; i++) {
             require (_numbers[i] <= maxNumber, 'exceed number scope');
@@ -225,8 +229,7 @@ contract Lottery is LotteryOwnable, Initializable {
         emit Buy(msg.sender, tokenId);
     }
 
-    function  multiBuy(uint256 _price, uint8[4][] memory _numbers) external {
-        require (!drawed(), 'drawed, can not buy now');
+    function  multiBuy(uint256 _price, uint8[4][] memory _numbers) external inDrawingPhase {
         require (_price >= minPrice, 'price must above minPrice');
         uint256 totalPrice  = 0;
         for (uint i = 0; i < _numbers.length; i++) {
@@ -354,7 +357,7 @@ contract Lottery is LotteryOwnable, Initializable {
             }
         }
         uint256 reward = 0;
-        if (matchingNumber > 0) {
+        if (matchingNumber > 1) {
             uint256 amount = lotteryNFT.getLotteryAmount(_tokenId);
             uint256 poolAmount = getTotalRewards(_issueIndex).mul(allocation[4-matchingNumber]).div(100);
             reward = amount.mul(1e12).div(getMatchingRewardAmount(_issueIndex, matchingNumber)).mul(poolAmount);
@@ -385,9 +388,9 @@ contract Lottery is LotteryOwnable, Initializable {
     }
 
     // Set the allocation for one reward
-    function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3, uint8 _allcation4) external onlyAdmin {
-        require (_allcation1 + _allcation2 + _allcation3 + _allcation4 < 100, 'exceed 100');
-        allocation = [_allcation1, _allcation2, _allcation3, _allcation4];
+    function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3) external onlyAdmin {
+        require (_allcation1 + _allcation2 + _allcation3 < 100, 'exceed 100');
+        allocation = [_allcation1, _allcation2, _allcation3];
     }
 
 }
