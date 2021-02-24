@@ -16,7 +16,12 @@ contract LotteryNFT is ERC721, Ownable {
 
     constructor() public ERC721("Pancake Lottery Ticket", "PLT") {}
 
-    function newLotteryItem(address player, uint8[4] memory _lotteryNumbers, uint256 _amount, uint256 _issueIndex)
+    function newLotteryItem(
+        address player, 
+        uint8[4] memory _lotteryNumbers, 
+        uint256 _amount, 
+        uint256 _issueIndex
+    )
         public onlyOwner
         returns (uint256)
     {
