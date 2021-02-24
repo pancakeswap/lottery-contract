@@ -1,6 +1,5 @@
 .gitattributes
-build
 artifacts
-.idea/*
+.idea/
 node_modules
-contracts/flattened/*.sol
+to_nuke
