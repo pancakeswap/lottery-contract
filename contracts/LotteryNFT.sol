@@ -1,11 +1,11 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract LotteryNFT is ERC721, Ownable {
+contract LotteryNFT is ERC1155, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
@@ -14,7 +14,7 @@ contract LotteryNFT is ERC721, Ownable {
     mapping (uint256 => uint256) public issueIndex;
     mapping (uint256 => bool) public claimInfo;
 
-    constructor() public ERC721("Pancake Lottery Ticket", "PLT") {}
+    constructor() public ERC1155("") {}
 
     function newLotteryItem(address player, uint8[4] memory _lotteryNumbers, uint256 _amount, uint256 _issueIndex)
         public onlyOwner
@@ -23,7 +23,7 @@ contract LotteryNFT is ERC721, Ownable {
         _tokenIds.increment();
 
         uint256 newItemId = _tokenIds.current();
-        _mint(player, newItemId);
+        _mint(player, newItemId, 1);
         lotteryInfo[newItemId] = _lotteryNumbers;
         lotteryAmount[newItemId] = _amount;
         issueIndex[newItemId] = _issueIndex;
@@ -31,6 +31,25 @@ contract LotteryNFT is ERC721, Ownable {
         // _setTokenURI(newItemId, tokenURI);
 
         return newItemId;
+    }
+
+    function batchNewLotteryItem(address player, uint8[4][] memory _lotteryNumbers, uint256 _amount, uint256 _issueIndex)
+        public onlyOwner
+        returns (uint256[] memory)
+    {
+        uint256[] memory newItemIds;
+        uint256[] memory prices;
+        for (uint i = 0; i < _numbers.length; i ++) {
+            _tokenIds.increment();
+            uint256 newItemId = _tokenIds.current();
+            newItemIds[i] = newItemId
+            lotteryInfo[newItemId] = _lotteryNumbers[i];
+            lotteryAmount[newItemId] = _amount;
+            issueIndex[newItemId] = _issueIndex;
+            prices[i] = _amount;
+        }
+        _mintBatch(player, newItemIds, prices)
+        return newItemIds
     }
 
     function getLotteryNumbers(uint256 tokenId) external view returns (uint8[4] memory) {
