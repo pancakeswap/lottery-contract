@@ -751,8 +751,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/old_contracts/LotteryNFT.sol": {
-      "lastModificationDate": 1614177536787,
-      "contentHash": "aba37aabab9b9e945c8bc09cf65dd644",
+      "lastModificationDate": 1614180531972,
+      "contentHash": "da5de040b5841b88f03efbf18a6f88d5",
       "sourceName": "contracts/old_contracts/LotteryNFT.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -972,8 +972,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LottoNFT.sol": {
-      "lastModificationDate": 1614179925518,
-      "contentHash": "1f5d291b3091a51fc69dc498d3d29ffe",
+      "lastModificationDate": 1614246179658,
+      "contentHash": "73f914e39664fa0aa2127145684f59bd",
       "sourceName": "contracts/LottoNFT.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -1188,6 +1188,43 @@
       "imports": [],
       "versionPragmas": [],
       "artifacts": []
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
+      "lastModificationDate": 1614248327719,
+      "contentHash": "1bed8cf5206a2f4afe7c3bd65fc18c4b",
+      "sourceName": "contracts/Lotto.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/utils/Counters.sol",
+        "@openzeppelin/contracts/access/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "0.7.3"
+      ],
+      "artifacts": [
+        "Lotto"
+      ]
     }
   }
 }
