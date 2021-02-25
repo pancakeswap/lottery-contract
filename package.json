@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npx hardhat compile"
+    "build": "npx hardhat compile",
+    "test": "npx hardhat test"
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.1",

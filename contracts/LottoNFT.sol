@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: MIT
 pragma solidity 0.7.3;
 pragma experimental ABIEncoderV2;
 
@@ -9,7 +10,8 @@ contract LottoNFT is ERC1155, Ownable {
     // Libraries 
     // Counter to create unique token IDs
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIDsCount;
+    Counters.Counter private tokenIDsCount_;
+
     // State variables 
     address internal lottoContract_;
     // Storage of the lotto numbers for each token
@@ -91,10 +93,10 @@ contract LottoNFT is ERC1155, Ownable {
         // Setting up tokenIDs for mint
         uint256[] memory amounts;
         for (uint256 i = 0; i < _amount; i++) {
-            _tokenIDsCount.increment();
-            tokenIDs[i] = _tokenIDsCount.current();
+            tokenIDsCount_.increment();
+            tokenIDs[i] = tokenIDsCount_.current();
             amounts[i] = 1;
-            lottoNumbers_[tokenIDs[i]] = _lottoNumbers[i][];
+            lottoNumbers_[tokenIDs[i]] = _lottoNumbers[i];
         }
         // Minting the batch of tokens
         _mintBatch(
@@ -114,4 +116,5 @@ contract LottoNFT is ERC1155, Ownable {
     //-------------------------------------------------------------------------
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
+
 }
