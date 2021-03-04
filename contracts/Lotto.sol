@@ -17,8 +17,6 @@ contract Lotto is Ownable {
     // Safe math
     using SafeMath for uint256;
 
-    uint8 internal constant MAX_BATCH_MINT = 120;
-
     // State variables 
     // Instance of Cake token (collateral currency for lotto)
     IERC20 internal cake_;
@@ -51,21 +49,6 @@ contract Lotto is Ownable {
     }
     // Lottery ID's to info
     mapping(uint256 => LottoInfo) internal allLotteries_;
-    // All the needed info around a lottery ticket
-    struct TicketBatchInfo {
-        uint256[] ticketIds;
-        uint8 numberOfTickets;
-        uint8[MAX_BATCH_MINT][] numbers;
-        bool[] claimed;
-    }
-    struct AllTickets {
-        uint8 totalBuys;
-        TicketBatchInfo[] batchBuys;
-    }
-    // The user => lottery ID => Tickets bought
-    mapping(address => mapping(uint256 => AllTickets)) internal allUserTicketPurchases_;
-
-    // mapping(address => Tickets[]) internal tickets_;
 
     //-------------------------------------------------------------------------
     // EVENTS
@@ -86,7 +69,7 @@ contract Lotto is Ownable {
     event newBatchMint(
         address indexed minter,
         uint256[] ticketIDs,
-        uint8[][] numbers,
+        uint32[] numbers,
         uint256 totalCost,
         uint256 discount,
         uint256 pricePaid
@@ -237,14 +220,24 @@ contract Lotto is Ownable {
         );
     }
 
+    function check(uint256 _numberOfTickets) public view returns(uint256) {
+        uint256 numberCheck = _numberOfTickets*sizeOfLottery_;
+        return numberCheck;
+    }
+
     function batchBuyLottoTicket(
         uint256 _lotteryID,
-        uint8 _numberOfTickets,
-        uint8[][] memory _chosenNumbersForEachTicket
+        uint32 _numberOfTickets,
+        uint32[] memory _chosenNumbersForEachTicket
     )
         public
         returns(uint256[] memory ticketIds)
     {
+        uint256 numberCheck = _numberOfTickets*sizeOfLottery_;
+        require(
+            _chosenNumbersForEachTicket.length == numberCheck,
+            "Incorrect number of chosen numbers"
+        );
         // Gets the cost per ticket
         uint256 costPerTicket = allLotteries_[_lotteryID].costPerTicket;
         // TODO make this a function including the discount 
@@ -278,12 +271,12 @@ contract Lotto is Ownable {
 
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
-        // TODO
-        AllTickets memory checkingTickets = allUserTicketPurchases_[msg.sender][_lottoID];
-        bool isTicketFound = false;
-        while(isTicketFound) {
+        // // TODO
+        // AllTickets memory checkingTickets = allUserTicketPurchases_[msg.sender][_lottoID];
+        // bool isTicketFound = false;
+        // while(isTicketFound) {
             
-        }
+        // }
 
     }
 
