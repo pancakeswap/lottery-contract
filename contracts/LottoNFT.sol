@@ -21,6 +21,7 @@ contract LottoNFT is ERC1155, Ownable {
         uint256[] ticketIDs;
         uint8[][] ticketNumbers;
         bool[] claimed;
+        uint256 numberOfTickets;
     }
     struct AllUserTickets {
         Tickets[] ticketBatches;
@@ -38,6 +39,32 @@ contract LottoNFT is ERC1155, Ownable {
         uint256 amountOfTokens, 
         uint256[] tokenIDs
     );
+
+    function getUserTicketsForLotteryBatchBuy(
+        address _user, 
+        uint256 _lotteryID,
+        uint8 _batchNo
+    ) 
+        public 
+        view 
+        returns(Tickets memory) 
+    {
+        // Storage for the tickets at the batch
+        Tickets memory batchTickets = tickets_[_user][_lotteryID].ticketBatches[_batchNo];
+        // Returns the ticket Batch
+        return batchTickets;
+    }
+
+    function getUserBatchAmountForLottery(
+        address _user, 
+        uint256 _lotteryID
+    ) 
+        public 
+        view 
+        returns(uint8) 
+    {
+        return tickets_[_user][_lotteryID].totalBuys;
+    }
 
     //-------------------------------------------------------------------------
     // MODIFIERS
@@ -119,7 +146,8 @@ contract LottoNFT is ERC1155, Ownable {
         Tickets memory newBatch = Tickets(
             tokenIDs,
             _numbers,
-            claimed
+            claimed,
+            _numberOfTickets
         );
         // Adding the ticket information to the storage mapping
         tickets_[msg.sender][_lottoID].ticketBatches.push(newBatch);

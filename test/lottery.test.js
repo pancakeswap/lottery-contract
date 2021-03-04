@@ -75,12 +75,22 @@ describe("Lottery contract", function() {
         });
 
         it("Non-admin attempt", async function() {
-
+            // await assert.revertWith(
+            //     curveInstance.from(user).mint(
+            //         test_settings.bzz.buyAmount,
+            //         buyCost
+            //     ),
+            //     test_settings.errors.max_spend
+            // );
         });
     });
 
     describe("Buying tickets tests", function() {
-        it("Cost per ticket", async function() {
+        /**
+         * Creating a lotto for all buying tests to use. Will be a new instance
+         * for each lotto. 
+         */
+        beforeEach( async () => {
             // Getting the current block timestamp
             let currentTimeStamp = await lotteryInstance.getTime();
             // Creating a new lottery
@@ -92,6 +102,9 @@ describe("Lottery contract", function() {
                 currentTimeStamp.add(1000).toString(),
                 currentTimeStamp.add(2000).toString()
             );
+        });
+
+        it("Cost per ticket", async function() {
             let price = await lotteryInstance.costToBuyTickets(
                 1,
                 5
@@ -101,18 +114,6 @@ describe("Lottery contract", function() {
         });
 
         it("Batch buying 1 tickets", async function() {
-            // Getting the current block timestamp
-            let currentTimeStamp = await lotteryInstance.getTime();
-            // Creating a new lottery
-            await lotteryInstance.connect(owner).createNewLotto(
-                lotto.newLotto.distribution,
-                lotto.newLotto.prize,
-                lotto.newLotto.cost,
-                currentTimeStamp.toString(),
-                currentTimeStamp.add(1000).toString(),
-                currentTimeStamp.add(2000).toString()
-            );
-
             let price = await lotteryInstance.costToBuyTickets(
                 1,
                 1
@@ -127,26 +128,28 @@ describe("Lottery contract", function() {
                 price
             );
 
-            await lotteryInstance.connect(owner).batchBuyLottoTicket(
-                1,
-                1,
-                ticketNumbers
-            )
+            let tokenIds = Array(1);
+            tokenIds[0] = 1;
+
+            await expect(
+                lotteryInstance.connect(owner).batchBuyLottoTicket(
+                    1,
+                    1,
+                    ticketNumbers
+                )
+            ).to.emit(lotteryInstance, lotto.events.mint)
+            .withArgs(
+                owner.address,
+                tokenIds,
+                ticketNumbers,
+                price,
+                0,
+                price
+            );
         });
 
         it("Batch buying 100 tickets", async function() {
-            // Getting the current block timestamp
-            let currentTimeStamp = await lotteryInstance.getTime();
-            // Creating a new lottery
-            await lotteryInstance.connect(owner).createNewLotto(
-                lotto.newLotto.distribution,
-                lotto.newLotto.prize,
-                lotto.newLotto.cost,
-                currentTimeStamp.toString(),
-                currentTimeStamp.add(1000).toString(),
-                currentTimeStamp.add(2000).toString()
-            );
-
+            // Getting the price to buy all tickets
             let price = await lotteryInstance.costToBuyTickets(
                 1,
                 150
@@ -161,11 +164,32 @@ describe("Lottery contract", function() {
                 price
             );
 
-            await lotteryInstance.connect(owner).batchBuyLottoTicket(
-                1,
-                120,
-                ticketNumbers
-            )
+            // await lotteryInstance.connect(owner).batchBuyLottoTicket(
+            //     1,
+            //     120,
+            //     ticketNumbers
+            // );
+
+            let tokenIds = Array(120);
+            for (let index = 0; index < 120; index++) {
+                tokenIds[0] = index + 1;
+            }
+
+            await expect(
+                lotteryInstance.connect(owner).batchBuyLottoTicket(
+                    1,
+                    120,
+                    ticketNumbers
+                )
+            ).to.emit(lotteryInstance, lotto.events.mint)
+            .withArgs(
+                owner.address,
+                tokenIds,
+                ticketNumbers,
+                price,
+                0,
+                price
+            );
         });
 
         it("Batch buying 10 000 tickets", async function() {

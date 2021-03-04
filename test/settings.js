@@ -1,4 +1,5 @@
 const { ethers } = require("ethers");
+const { BigNumber } = require("bignumber.js");
 
 const lotto = {
     setup: {
@@ -11,7 +12,8 @@ const lotto = {
         cost: ethers.utils.parseUnits("10", 18),
     }, 
     events: {
-        new: "newLotteryCreated"
+        new: "newLotteryCreated",
+        mint: "newBatchMint"
     },
     buy: {
         cake: ethers.utils.parseUnits("10000000", 18),
@@ -29,13 +31,13 @@ const lottoNFT = {
 function createAndFillTwoDArray({
     rows,
     columns
-  }){
+}){
     var numberOfNumbers = Array(rows);
     for (let index = 0; index < rows; index++) {
         numberOfNumbers[index] = Array(columns).fill(1);
     }
     return numberOfNumbers;
-  }
+}
 
 module.exports = {
     lotto,
