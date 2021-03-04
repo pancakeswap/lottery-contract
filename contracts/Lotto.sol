@@ -271,12 +271,8 @@ contract Lotto is Ownable {
 
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
-        // // TODO
-        // AllTickets memory checkingTickets = allUserTicketPurchases_[msg.sender][_lottoID];
-        // bool isTicketFound = false;
-        // while(isTicketFound) {
-            
-        // }
+        // TODO
+        
 
     }
 
@@ -284,4 +280,8 @@ contract Lotto is Ownable {
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
 
+    function discount(uint256 _lottoID, uint32 _numberOfTokens) internal returns(uint256 cost, uint256 discount) {
+        cost = allLotteries_[_lottoID].costPerTicket*_numberOfTokens;
+        discount = (_numberOfTokens*2)/1000;
+    }
 }
