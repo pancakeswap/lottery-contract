@@ -86,7 +86,10 @@ contract Lotto is Ownable {
     event newBatchMint(
         address indexed minter,
         uint256[] ticketIDs,
-        uint256[][] numbers
+        uint8[][] numbers,
+        uint256 totalCost,
+        uint256 discount,
+        uint256 pricePaid
     );
 
     //-------------------------------------------------------------------------
@@ -263,7 +266,14 @@ contract Lotto is Ownable {
             _numberOfTickets,
             _chosenNumbersForEachTicket
         );
-        // emit TODO
+        emit newBatchMint(
+            msg.sender,
+            ticketIds,
+            _chosenNumbersForEachTicket,
+            totalCost,
+            0, // TODO
+            totalCost
+        );
     }
 
 
