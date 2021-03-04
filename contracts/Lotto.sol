@@ -172,9 +172,11 @@ contract Lotto is Ownable {
 
     function drawWinningNumbers(uint256 _lottoID) public onlyOwner() {
         // Creating space for winning numbers
-        uint8[] memory winningNumbers = new uint8[](sizeOfLottery_);
+        uint8[] memory winningNumbers;
         // TODO will call ChainLink VRF
-        winningNumbers = [1, 2, 3, 4];
+        for (uint8 i = 0; i < sizeOfLottery_; i++) {
+            winningNumbers[i] = i;
+        }
         allLotteries_[_lottoID].winningNumbers = winningNumbers;
     }
 
