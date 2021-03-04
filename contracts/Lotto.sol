@@ -237,16 +237,17 @@ contract Lotto is Ownable {
     function batchBuyLottoTicket(
         uint256 _lotteryID,
         uint8 _numberOfTickets,
-        uint8[MAX_BATCH_MINT][] memory _chosenNumbersForEachTicket
+        uint8[][] memory _chosenNumbersForEachTicket
     )
         public
         returns(uint256[] memory ticketIds)
     {
-        // TODO add check that numbers are in range
+        // Gets the cost per ticket
         uint256 costPerTicket = allLotteries_[_lotteryID].costPerTicket;
         // TODO make this a function including the discount 
+        // Gets the total cost for the buy
         uint256 totalCost = costPerTicket*_numberOfTickets;
-
+        // Transfers the required cake to this contract
         require(
             cake_.transferFrom(
                 msg.sender, 
@@ -255,30 +256,19 @@ contract Lotto is Ownable {
             ),
             "Transfer of cake failed"
         );
-
+        // Batch mints the user their tickets
         ticketIds = nft_.batchMint(
             msg.sender,
-            _numberOfTickets
-        );
-
-        // Creating an empty (false) array of booleans for claims
-        bool[] memory claimed = new bool[](_numberOfTickets);
-        // Creating struct instance of ticket purchase info
-        TicketBatchInfo memory batchMint = TicketBatchInfo(
-            ticketIds,
+            _lotteryID,
             _numberOfTickets,
-            _chosenNumbersForEachTicket,
-            claimed
+            _chosenNumbersForEachTicket
         );
-        // Adding batch purchased tickets to storage
-        AllTickets storage tickets = allUserTicketPurchases_[msg.sender][_lotteryID];
-        tickets.totalBuys += 1;
-        tickets.batchBuys.push(batchMint);
         // emit TODO
     }
 
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
+        // TODO
         AllTickets memory checkingTickets = allUserTicketPurchases_[msg.sender][_lottoID];
         bool isTicketFound = false;
         while(isTicketFound) {
@@ -290,13 +280,5 @@ contract Lotto is Ownable {
     //-------------------------------------------------------------------------
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
-
-/**
-struct struct TicketBatchInfo {
-        uint256[] ticketIds;
-        uint256[][] numbers;
-        bool[] claimed;
-    }
- */
 
 }

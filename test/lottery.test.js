@@ -100,7 +100,41 @@ describe("Lottery contract", function() {
             console.log(price.toString())
         });
 
-        it.only("Batch buying 100 tickets", async function() {
+        it("Batch buying 1 tickets", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await lotteryInstance.getTime();
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                currentTimeStamp.toString(),
+                currentTimeStamp.add(1000).toString(),
+                currentTimeStamp.add(2000).toString()
+            );
+
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                1
+            );
+
+            console.log(price.toString())
+
+            let ticketNumbers = createAndFillTwoDArray({rows: 4, columns: 1});
+            
+            await cakeInstance.connect(owner).approve(
+                lotteryInstance.address,
+                price
+            );
+
+            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+                1,
+                1,
+                ticketNumbers
+            )
+        });
+
+        it("Batch buying 100 tickets", async function() {
             // Getting the current block timestamp
             let currentTimeStamp = await lotteryInstance.getTime();
             // Creating a new lottery

@@ -5,8 +5,10 @@ pragma experimental ABIEncoderV2;
 interface ILottoNFT {
     function batchMint(
         address _to,
-        uint8 _amount
+        uint256 _lottoID,
+        uint8 _numberOfTickets,
+        uint8[][] memory _numbers
     )
         external
-        returns(uint256[] memory tokenIDs);
+        returns(uint256[] memory);
 }
