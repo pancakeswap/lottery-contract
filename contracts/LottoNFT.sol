@@ -16,6 +16,18 @@ contract LottoNFT is ERC1155, Ownable {
     address internal lottoContract_;
     // Storage of the lotto numbers for each token
     mapping(uint256 => uint8[]) internal lottoNumbers_;
+    // Storage for ticket information
+    struct Tickets {
+        uint256[] ticketIDs;
+        uint8[][] ticketNumbers;
+        bool[] claimed;
+    }
+    struct AllUserTickets {
+        Tickets[] ticketBatches;
+        uint8 totalBuys;
+    }
+    // User => lottery ID => Tickets 
+    mapping(address => mapping(uint256 => AllUserTickets)) internal tickets_;
 
     //-------------------------------------------------------------------------
     // EVENTS
@@ -84,28 +96,43 @@ contract LottoNFT is ERC1155, Ownable {
      */
     function batchMint(
         address _to,
-        uint8 _numberOfTickets
+        uint256 _lottoID,
+        uint8 _numberOfTickets,
+        uint8[][] memory _numbers
     )
         public
-        // onlyLotto()
+        onlyLotto()
         returns(uint256[] memory)
     {
+        // Storage for the amount of tokens to mint (always 1)
         uint256[] memory amounts = new uint256[](_numberOfTickets);
+        // Storage for the token IDs
         uint256[] memory tokenIDs = new uint256[](_numberOfTickets);
-        uint256 i = 0;
-        for (i = 0; i < _numberOfTickets; i += 1) {
+        for (uint256 i = 0; i < _numberOfTickets; i += 1) {
             tokenIDsCount_.increment();
             tokenIDs[i] = tokenIDsCount_.current();
             amounts[i] = 1;
-            // lottoNumbers_[tokenIDs[i]] = _lottoNumbers[i];
         }
+        // Making an array for the claimed status (default to 0/false)
+        bool[] memory claimed = new bool[](_numberOfTickets);
+        // Making an instance of the ticket information
+        Tickets memory newBatch = Tickets(
+            tokenIDs,
+            _numbers,
+            claimed
+        );
+        // Adding the ticket information to the storage mapping
+        tickets_[msg.sender][_lottoID].ticketBatches.push(newBatch);
+        // Incrementing the batch buy counter
+        tickets_[msg.sender][_lottoID].totalBuys += 1;
         // Minting the batch of tokens
         _mintBatch(
             _to,
             tokenIDs,
             amounts,
             msg.data
-        );// TODO might want to hardcode bytes passed in (msg.data) to be blank
+        );
+        // TODO might want to hardcode bytes passed in (msg.data) to be blank
         // Emitting relevant info
         emit infoBatchMint(
             _to, 
