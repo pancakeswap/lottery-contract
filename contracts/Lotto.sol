@@ -2,8 +2,11 @@
 pragma solidity 0.7.3;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./ILottoNFT.sol";
 
 // TODO rename to Lottery when done
 contract Lotto is Ownable {
@@ -11,8 +14,22 @@ contract Lotto is Ownable {
     // Counter for lottery IDs
     using Counters for Counters.Counter;
     Counters.Counter private lotteryIDCounter_;
+    // Safe math
+    using SafeMath for uint256;
+
+    uint8 internal constant MAX_BATCH_MINT = 120;
 
     // State variables 
+    // Instance of Cake token (collateral currency for lotto)
+    IERC20 internal cake_;
+    // Storing of the NFT
+    ILottoNFT internal nft_;
+
+    // Lottery size
+    uint8 internal sizeOfLottery_;
+    // Max range for numbers (starting at 0)
+    uint8 internal maxValidRange_;
+
     // Represents the status of the lottery
     enum Status { 
         NotStarted,     // The lottery has not started yet
@@ -24,26 +41,29 @@ contract Lotto is Ownable {
     struct LottoInfo {
         uint256 lotteryID;          // ID for lotto
         Status lotteryStatus;       // Status for lotto
-        uint8 numberOfNumbers;      // The number of numbers in this lotto
         uint256 prizePoolInCake;    // The amount of cake for prize money
-        uint8[] prizeDistribution; // The distribution for prize money
+        uint256 costPerTicket;      // Cost per ticket in $cake
+        uint8[] prizeDistribution;  // The distribution for prize money
         uint256 startingBlock;      // Block timestamp for star of lotto
         uint256 closingBlock;       // Block timestamp for end of entries
         uint256 endBlock;           // Block timestamp for claiming winnings
         uint8[] winningNumbers;     // The winning numbers
-        uint256[] tickets;          // Tickets bought for this lotto
     }
     // Lottery ID's to info
     mapping(uint256 => LottoInfo) internal allLotteries_;
     // All the needed info around a lottery ticket
-    struct TicketInfo {
-        uint256 lotteryID;
-        uint256 ticketID;
-        bool claimed;
-        address owner;
+    struct TicketBatchInfo {
+        uint256[] ticketIds;
+        uint8 numberOfTickets;
+        uint8[MAX_BATCH_MINT][] numbers;
+        bool[] claimed;
     }
-    // Ticket ID's to their information
-    mapping(uint256 => TicketInfo) internal allTickets_;
+    struct AllTickets {
+        uint8 totalBuys;
+        TicketBatchInfo[] batchBuys;
+    }
+    // The user => lottery ID => Tickets bought
+    mapping(address => mapping(uint256 => AllTickets)) internal allUserTicketPurchases_;
 
     // mapping(address => Tickets[]) internal tickets_;
 
@@ -54,13 +74,19 @@ contract Lotto is Ownable {
     event newLotteryCreated(
         uint256 indexed lottoID,
         Status lotteryStatus,
-        uint8 numberOfNumbers,
         uint8[] prizeDistribution,
         uint256 prizePoolInCake,
+        uint256 costPerTicket,
         uint256 startingBlock,
         uint256 closingBlock,
         uint256 endBlock,
         address indexed creator
+    );
+
+    event newBatchMint(
+        address indexed minter,
+        uint256[] ticketIDs,
+        uint256[][] numbers
     );
 
     //-------------------------------------------------------------------------
@@ -73,8 +99,18 @@ contract Lotto is Ownable {
     // CONSTRUCTOR
     //-------------------------------------------------------------------------
 
-    constructor() {
+    constructor(
+        address _cake, 
+        uint8 _sizeOfLotteryNumbers,
+        uint8 _maxValidNumberRange    
+    ) {
+        cake_ = IERC20(_cake);
+        sizeOfLottery_ = _sizeOfLotteryNumbers;
+        maxValidRange_ = _maxValidNumberRange;
+    }
 
+    function init(address _lotteryNFT) public onlyOwner() {
+        nft_ = ILottoNFT(_lotteryNFT);
     }
 
     //-------------------------------------------------------------------------
@@ -88,13 +124,61 @@ contract Lotto is Ownable {
         return block.timestamp;
     }
 
+    function costToBuyTickets(
+        uint256 _lotteryID,
+        uint256 _numberOfTickets
+    ) 
+        public 
+        view 
+        returns(uint256 totalCost) 
+    {
+        uint256 pricePer = allLotteries_[_lotteryID].costPerTicket;
+        totalCost = pricePer.mul(_numberOfTickets);
+        // TODO use internal bonding curve 
+    }
+
+    function getBasicLottoInfo(uint256 _lotteryID) public view returns(
+        LottoInfo memory
+    )
+    {
+        return(
+            allLotteries_[_lotteryID]
+        ); 
+    }
+
     //-------------------------------------------------------------------------
     // STATE MODIFYING FUNCTIONS 
     //-------------------------------------------------------------------------
 
+    //-------------------------------------------------------------------------
+    // Restricted Access Functions
+
+    function updateSizeOfLottery(uint8 _newSize) public onlyOwner() {
+        require(
+            sizeOfLottery_ != _newSize,
+            "Cannot set to current size"
+        );
+        sizeOfLottery_ = _newSize;
+    }
+
+    function updateMaxRange(uint8 _newMaxRange) public onlyOwner() {
+        require(
+            maxValidRange_ != _newMaxRange,
+            "Cannot set to current size"
+        );
+        maxValidRange_ = _newMaxRange;
+    }
+
+
+    function drawWinningNumbers(uint256 _lottoID) public onlyOwner() {
+        // Creating space for winning numbers
+        uint8[] memory winningNumbers = new uint8[](sizeOfLottery_);
+        // TODO will call ChainLink VRF
+        winningNumbers = [1, 2, 3, 4];
+        allLotteries_[_lottoID].winningNumbers = winningNumbers;
+    }
+
     /**
-     * @param   _numberOfWinningNumbers The number of numbers that this lotto 
-     *          will have. I.e 10 numbers.
      * @param   _prizeDistribution An array defining the distribution of the 
      *          prize pool. I.e if a lotto has 5 numbers, the distribution could
      *          be [5, 10, 15, 20, 30] = 100%. This means if you get one number
@@ -113,9 +197,9 @@ contract Lotto is Ownable {
      *          will be pushed back until winning numbers are added. 
      */
     function createNewLotto(
-        uint8 _numberOfWinningNumbers,
         uint8[] calldata _prizeDistribution,
         uint256 _prizePoolInCake,
+        uint256 _costPerTicket,
         uint256 _startingBlock,
         uint256 _closingBlock,
         uint256 _endBlock
@@ -128,8 +212,8 @@ contract Lotto is Ownable {
 
         allLotteries_[lotteryIDCounter_.current()].lotteryID = lotteryIDCounter_.current();
         allLotteries_[lotteryIDCounter_.current()].lotteryStatus = Status.NotStarted;
-        allLotteries_[lotteryIDCounter_.current()].numberOfNumbers = _numberOfWinningNumbers;
         allLotteries_[lotteryIDCounter_.current()].prizePoolInCake = _prizePoolInCake;
+        allLotteries_[lotteryIDCounter_.current()].costPerTicket = _costPerTicket;
         allLotteries_[lotteryIDCounter_.current()].prizeDistribution = _prizeDistribution;
         allLotteries_[lotteryIDCounter_.current()].startingBlock = _startingBlock;
         allLotteries_[lotteryIDCounter_.current()].closingBlock = _closingBlock;
@@ -138,9 +222,9 @@ contract Lotto is Ownable {
         emit newLotteryCreated(
             lotteryIDCounter_.current(),
             Status.NotStarted,
-            _numberOfWinningNumbers,
             _prizeDistribution,
             _prizePoolInCake,
+            _costPerTicket,
             _startingBlock,
             _closingBlock,
             _endBlock,
@@ -148,9 +232,69 @@ contract Lotto is Ownable {
         );
     }
 
+    function batchBuyLottoTicket(
+        uint256 _lotteryID,
+        uint8 _numberOfTickets,
+        uint8[MAX_BATCH_MINT][] memory _chosenNumbersForEachTicket
+    )
+        public
+        returns(uint256[] memory ticketIds)
+    {
+        // TODO add check that numbers are in range
+        uint256 costPerTicket = allLotteries_[_lotteryID].costPerTicket;
+        // TODO make this a function including the discount 
+        uint256 totalCost = costPerTicket*_numberOfTickets;
+
+        require(
+            cake_.transferFrom(
+                msg.sender, 
+                address(this), 
+                totalCost
+            ),
+            "Transfer of cake failed"
+        );
+
+        ticketIds = nft_.batchMint(
+            msg.sender,
+            _numberOfTickets
+        );
+
+        // Creating an empty (false) array of booleans for claims
+        bool[] memory claimed = new bool[](_numberOfTickets);
+        // Creating struct instance of ticket purchase info
+        TicketBatchInfo memory batchMint = TicketBatchInfo(
+            ticketIds,
+            _numberOfTickets,
+            _chosenNumbersForEachTicket,
+            claimed
+        );
+        // Adding batch purchased tickets to storage
+        AllTickets storage tickets = allUserTicketPurchases_[msg.sender][_lotteryID];
+        tickets.totalBuys += 1;
+        tickets.batchBuys.push(batchMint);
+        // emit TODO
+    }
+
+
+    function claimReward(uint256 _lottoID, uint256 _tokenID) external {
+        AllTickets memory checkingTickets = allUserTicketPurchases_[msg.sender][_lottoID];
+        bool isTicketFound = false;
+        while(isTicketFound) {
+            
+        }
+
+    }
 
     //-------------------------------------------------------------------------
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
+
+/**
+struct struct TicketBatchInfo {
+        uint256[] ticketIds;
+        uint256[][] numbers;
+        bool[] claimed;
+    }
+ */
 
 }

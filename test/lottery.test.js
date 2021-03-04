@@ -1,7 +1,8 @@
 const { expect } = require("chai");
 const { 
     lotto,
-    lottoNFT
+    lottoNFT,
+    createAndFillTwoDArray
 } = require("./settings.js");
 
 describe("Lottery contract", function() {
@@ -9,6 +10,8 @@ describe("Lottery contract", function() {
     let lotteryInstance, lotteryContract;
     // Creating the instance and contract info for the lottery NFT contract
     let lotteryNftInstance, lotteryNftContract;
+    // Creating the instance and contract info for the cake token contract
+    let cakeInstance, cakeContract;
     // Creating the users
     let owner, buyer;
 
@@ -22,11 +25,23 @@ describe("Lottery contract", function() {
         lotteryContract = await ethers.getContractFactory("Lotto");
         // Getting the lotteryNFT code (abi, bytecode, name)
         lotteryNftContract = await ethers.getContractFactory("LottoNFT");
+        // Getting the lotteryNFT code (abi, bytecode, name)
+        cakeContract = await ethers.getContractFactory("Mock_erc20");
         // Deploying the instances
-        lotteryInstance = await lotteryContract.deploy();
+        cakeInstance = await cakeContract.deploy(
+            lotto.buy.cake,
+        );
+        lotteryInstance = await lotteryContract.deploy(
+            cakeInstance.address,
+            lotto.setup.sizeOfLottery,
+            lotto.setup.maxValidRange,
+        );
         lotteryNftInstance = await lotteryNftContract.deploy(
             lottoNFT.newLottoNft.uri,
             lotteryInstance.address
+        );
+        await lotteryInstance.init(
+            lotteryNftInstance.address
         );
     });
 
@@ -37,9 +52,9 @@ describe("Lottery contract", function() {
             // Creating a new lottery
             await expect(
                 lotteryInstance.connect(owner).createNewLotto(
-                    lotto.newLotto.noOfNo,
                     lotto.newLotto.distribution,
                     lotto.newLotto.prize,
+                    lotto.newLotto.cost,
                     currentTimeStamp.toString(),
                     currentTimeStamp.add(1000).toString(),
                     currentTimeStamp.add(2000).toString()
@@ -49,14 +64,97 @@ describe("Lottery contract", function() {
             .withArgs(
                 1,
                 0,
-                lotto.newLotto.noOfNo,
                 lotto.newLotto.distribution,
                 lotto.newLotto.prize,
+                lotto.newLotto.cost,
                 currentTimeStamp.toString(),
                 currentTimeStamp.add(1000).toString(),
                 currentTimeStamp.add(2000).toString(),
                 owner.address
             );
+        });
+
+        it("Non-admin attempt", async function() {
+
+        });
+    });
+
+    describe("Buying tickets tests", function() {
+        it("Cost per ticket", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await lotteryInstance.getTime();
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                currentTimeStamp.toString(),
+                currentTimeStamp.add(1000).toString(),
+                currentTimeStamp.add(2000).toString()
+            );
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                5
+            );
+
+            console.log(price.toString())
+        });
+
+        it.only("Batch buying 100 tickets", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await lotteryInstance.getTime();
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                currentTimeStamp.toString(),
+                currentTimeStamp.add(1000).toString(),
+                currentTimeStamp.add(2000).toString()
+            );
+
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                150
+            );
+
+            console.log(price.toString())
+
+            let ticketNumbers = createAndFillTwoDArray({rows: 4, columns: 120});
+            
+            await cakeInstance.connect(owner).approve(
+                lotteryInstance.address,
+                price
+            );
+
+            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+                1,
+                120,
+                ticketNumbers
+            )
+        });
+
+        it("Batch buying 10 000 tickets", async function() {
+
+        });
+    });
+
+    describe("View function tests", function() {
+        it("Get Lotto Info", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await lotteryInstance.getTime();
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                currentTimeStamp.toString(),
+                currentTimeStamp.add(1000).toString(),
+                currentTimeStamp.add(2000).toString()
+            );
+
+            let lottoInfo = await lotteryInstance.getBasicLottoInfo(1);
+            console.log(lottoInfo.prizePoolInCake.toString())
         });
     });
 });

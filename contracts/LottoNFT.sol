@@ -78,25 +78,26 @@ contract LottoNFT is ERC1155, Ownable {
 
     /**
      * @param   _to The address being minted to
-     * @param   _amount The number of NFT's to mint
+     * @param   _numberOfTickets The number of NFT's to mint
      * @notice  Only the lotto contract is able to mint tokens. 
+        // uint8[][] calldata _lottoNumbers
      */
     function batchMint(
         address _to,
-        uint8 _amount,
-        uint8[][] calldata _lottoNumbers
+        uint8 _numberOfTickets
     )
         public
-        onlyLotto()
-        returns(uint256[] memory tokenIDs)
+        // onlyLotto()
+        returns(uint256[] memory)
     {
-        // Setting up tokenIDs for mint
-        uint256[] memory amounts;
-        for (uint256 i = 0; i < _amount; i++) {
+        uint256[] memory amounts = new uint256[](_numberOfTickets);
+        uint256[] memory tokenIDs = new uint256[](_numberOfTickets);
+        uint256 i = 0;
+        for (i = 0; i < _numberOfTickets; i += 1) {
             tokenIDsCount_.increment();
             tokenIDs[i] = tokenIDsCount_.current();
             amounts[i] = 1;
-            lottoNumbers_[tokenIDs[i]] = _lottoNumbers[i];
+            // lottoNumbers_[tokenIDs[i]] = _lottoNumbers[i];
         }
         // Minting the batch of tokens
         _mintBatch(
@@ -108,13 +109,32 @@ contract LottoNFT is ERC1155, Ownable {
         // Emitting relevant info
         emit infoBatchMint(
             _to, 
-            _amount, 
+            _numberOfTickets, 
             tokenIDs
         ); 
+
+        return tokenIDs;
+    }
+
+    function batchMintInternal(
+        address _to, 
+        uint256[] memory _tokenIDs, 
+        uint256[] memory _amounts
+    ) 
+        public 
+    {
+        _mintBatch(
+            _to,
+            _tokenIDs,
+            _amounts,
+            msg.data
+        );
     }
 
     //-------------------------------------------------------------------------
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
 
+
 }
+
