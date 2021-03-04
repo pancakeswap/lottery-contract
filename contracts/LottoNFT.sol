@@ -7,11 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract LottoNFT is ERC1155, Ownable {
-    // Libraries 
-    // Counter to create unique token IDs
-    using Counters for Counters.Counter;
-    Counters.Counter private tokenIDsCount_;
-
+    // Counter for token IDs
+    uint256 internal tokenIDsCount_ = 0;
     // State variables 
     address internal lottoContract_;
     // Storage of the lotto numbers for each token
@@ -19,9 +16,9 @@ contract LottoNFT is ERC1155, Ownable {
     // Storage for ticket information
     struct Tickets {
         uint256[] ticketIDs;
-        uint8[][] ticketNumbers;
+        uint32[] ticketNumbers;
         bool[] claimed;
-        uint256 numberOfTickets;
+        uint32 numberOfTickets;
     }
     struct AllUserTickets {
         Tickets[] ticketBatches;
@@ -124,8 +121,8 @@ contract LottoNFT is ERC1155, Ownable {
     function batchMint(
         address _to,
         uint256 _lottoID,
-        uint8 _numberOfTickets,
-        uint8[][] memory _numbers
+        uint32 _numberOfTickets,
+        uint32[] memory _numbers
     )
         public
         onlyLotto()
@@ -136,8 +133,8 @@ contract LottoNFT is ERC1155, Ownable {
         // Storage for the token IDs
         uint256[] memory tokenIDs = new uint256[](_numberOfTickets);
         for (uint256 i = 0; i < _numberOfTickets; i += 1) {
-            tokenIDsCount_.increment();
-            tokenIDs[i] = tokenIDsCount_.current();
+            tokenIDsCount_ += 1;
+            tokenIDs[i] = tokenIDsCount_;
             amounts[i] = 1;
         }
         // Making an array for the claimed status (default to 0/false)

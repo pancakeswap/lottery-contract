@@ -1,8 +1,8 @@
-const { expect } = require("chai");
+const { expect, assert } = require("chai");
 const { 
     lotto,
     lottoNFT,
-    createAndFillTwoDArray
+    generateLottoNumbers
 } = require("./settings.js");
 
 describe("Lottery contract", function() {
@@ -112,89 +112,142 @@ describe("Lottery contract", function() {
 
             console.log(price.toString())
         });
-
+        /**
+         * Tests the batch buying of one token
+         */
         it("Batch buying 1 tickets", async function() {
+            // Getting the price to buy
             let price = await lotteryInstance.costToBuyTickets(
                 1,
                 1
             );
-
-            console.log(price.toString())
-
-            let ticketNumbers = createAndFillTwoDArray({rows: 4, columns: 1});
-            
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 1, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Approving lotto to spend cost
             await cakeInstance.connect(owner).approve(
                 lotteryInstance.address,
                 price
             );
-
-            let tokenIds = Array(1);
-            tokenIds[0] = 1;
-
-            await expect(
-                lotteryInstance.connect(owner).batchBuyLottoTicket(
-                    1,
-                    1,
-                    ticketNumbers
-                )
-            ).to.emit(lotteryInstance, lotto.events.mint)
-            .withArgs(
-                owner.address,
-                tokenIds,
-                ticketNumbers,
-                price,
-                0,
-                price
+            // Batch buying tokens
+            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+                1,
+                1,
+                ticketNumbers
+            );
+            // Testing results
+            // TODO get user balances
+            assert.equal(
+                price.toString(),
+                lotto.buy.one.cost,
+                "Incorrect cost for batch buy of 1"
             );
         });
-
-        it("Batch buying 100 tickets", async function() {
-            // Getting the price to buy all tickets
+        /**
+         * Tests the batch buying of ten token
+         */
+        it("Batch buying 10 tickets", async function() {
+            // Getting the price to buy
             let price = await lotteryInstance.costToBuyTickets(
                 1,
-                150
+                10
             );
-
-            console.log(price.toString())
-
-            let ticketNumbers = createAndFillTwoDArray({rows: 4, columns: 120});
-            
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 10, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Approving lotto to spend cost
             await cakeInstance.connect(owner).approve(
                 lotteryInstance.address,
                 price
             );
-
-            // await lotteryInstance.connect(owner).batchBuyLottoTicket(
-            //     1,
-            //     120,
-            //     ticketNumbers
-            // );
-
-            let tokenIds = Array(120);
-            for (let index = 0; index < 120; index++) {
-                tokenIds[0] = index + 1;
-            }
-
-            await expect(
-                lotteryInstance.connect(owner).batchBuyLottoTicket(
-                    1,
-                    120,
-                    ticketNumbers
-                )
-            ).to.emit(lotteryInstance, lotto.events.mint)
-            .withArgs(
-                owner.address,
-                tokenIds,
-                ticketNumbers,
-                price,
-                0,
-                price
+            // Batch buying tokens
+            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+                1,
+                10,
+                ticketNumbers
+            );
+            // Testing results
+            // TODO get user balances
+            assert.equal(
+                price.toString(),
+                lotto.buy.ten.cost,
+                "Incorrect cost for batch buy of 10"
             );
         });
-
-        it("Batch buying 10 000 tickets", async function() {
-
-        });
+        /**
+         * Tests the batch buying of one hundred token
+         */
+        it("Batch buying 100 tickets", async function() {
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                100
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 100, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Approving lotto to spend cost
+            await cakeInstance.connect(owner).approve(
+                lotteryInstance.address,
+                price
+            );
+            // Batch buying tokens
+            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+                1,
+                100,
+                ticketNumbers
+            );
+            // Testing results
+            // TODO get user balances
+            assert.equal(
+                price.toString(),
+                lotto.buy.one_hundred.cost,
+                "Incorrect cost for batch buy of 100"
+            );
+        }); 
+        /**
+         * Tests the batch buying of one thousand token
+         */
+        it("Batch buying max (110) tickets", async function() {
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                110
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 110, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Approving lotto to spend cost
+            await cakeInstance.connect(owner).approve(
+                lotteryInstance.address,
+                price
+            );
+            // Batch buying tokens
+            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+                1,
+                110,
+                ticketNumbers
+            );
+            // Testing results
+            // TODO get user balances
+            assert.equal(
+                price.toString(),
+                lotto.buy.max.cost,
+                "Incorrect cost for max batch buy of 110"
+            );
+        }); 
     });
 
     describe("View function tests", function() {

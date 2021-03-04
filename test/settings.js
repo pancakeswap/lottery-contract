@@ -17,8 +17,17 @@ const lotto = {
     },
     buy: {
         cake: ethers.utils.parseUnits("10000000", 18),
+        one: {
+            cost: "10000000000000000000"
+        },
+        ten: {
+            cost: "100000000000000000000"
+        },
         one_hundred: {
             cost: "1000000000000000000000"
+        },
+        max: {
+            cost: "1100000000000000000000"
         }
     }
 }
@@ -28,13 +37,18 @@ const lottoNFT = {
     }
 }
 
-function createAndFillTwoDArray({
-    rows,
-    columns
+function generateLottoNumbers({
+    numberOfTickets,
+    lottoSize,
+    maxRange
 }){
-    var numberOfNumbers = Array(rows);
-    for (let index = 0; index < rows; index++) {
-        numberOfNumbers[index] = Array(columns).fill(1);
+    var numberOfNumbers = [];
+    let counterForNumbers = 0;
+    for (let i = 0; i < numberOfTickets; i++) {
+        for (let j = 0; j < lottoSize; j++) {
+            numberOfNumbers[counterForNumbers] = Math.floor(Math.random() * maxRange + 1); 
+            counterForNumbers += 1;
+        }
     }
     return numberOfNumbers;
 }
@@ -42,5 +56,5 @@ function createAndFillTwoDArray({
 module.exports = {
     lotto,
     lottoNFT,
-    createAndFillTwoDArray
+    generateLottoNumbers
 }

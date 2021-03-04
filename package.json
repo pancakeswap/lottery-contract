@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "build": "npx hardhat compile",
-    "test": "npx hardhat test"
+    "test": "npx hardhat test",
+    "clean": "rm -rf artifacts && rm -rf cache"
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.1",
