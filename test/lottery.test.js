@@ -1,7 +1,10 @@
 const { expect, assert } = require("chai");
+const { providers } = require("ethers");
+const { network } = require("hardhat");
 const { 
     lotto,
     lottoNFT,
+    BigNumber,
     generateLottoNumbers
 } = require("./settings.js");
 
@@ -14,6 +17,8 @@ describe("Lottery contract", function() {
     let cakeInstance, cakeContract;
     // Creating the users
     let owner, buyer;
+    // Setting the provider to enable getting timestamps 
+    let provider = new ethers.providers.JsonRpcProvider();
 
     beforeEach(async () => {
         // Getting the signers provided by ethers
@@ -92,15 +97,19 @@ describe("Lottery contract", function() {
          */
         beforeEach( async () => {
             // Getting the current block timestamp
-            let currentTimeStamp = await lotteryInstance.getTime();
+
+            let currentTimeStamp = await provider.getBlock("latest");
+            
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+
             // Creating a new lottery
             await lotteryInstance.connect(owner).createNewLotto(
                 lotto.newLotto.distribution,
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
-                currentTimeStamp.toString(),
-                currentTimeStamp.add(1000).toString(),
-                currentTimeStamp.add(2000).toString()
+                timeStamp.toString(),
+                timeStamp.plus(1000).toString(),
+                timeStamp.plus(2000).toString()
             );
         });
 

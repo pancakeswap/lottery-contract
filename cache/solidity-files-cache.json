@@ -257,8 +257,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1614948520423,
-      "contentHash": "ea71b3ac8f29f466bb92a0f0acbe8ce6",
+      "lastModificationDate": 1614954456579,
+      "contentHash": "2c8fa7d9c0210b7444b521246c3cb5b2",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -287,7 +287,8 @@
         "@openzeppelin/contracts/utils/Counters.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/math/SafeMath.sol",
-        "./ILottoNFT.sol"
+        "./ILottoNFT.sol",
+        "hardhat/console.sol"
       ],
       "versionPragmas": [
         "0.7.3"
@@ -434,6 +435,40 @@
       ],
       "artifacts": [
         "SafeMath"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1614176544642,
+      "contentHash": "cc4777addd464ea56fa35b1c45df0591",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/utils/Context.sol": {

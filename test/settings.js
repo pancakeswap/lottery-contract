@@ -7,7 +7,7 @@ const lotto = {
         maxValidRange: 20
     },
     newLotto: {
-        distribution: [5, 10, 15, 20, 30],
+        distribution: [5, 10, 15, 20, 50],
         prize: ethers.utils.parseUnits("1000", 18),
         cost: ethers.utils.parseUnits("10", 18),
     }, 
@@ -56,5 +56,6 @@ function generateLottoNumbers({
 module.exports = {
     lotto,
     lottoNFT,
+    BigNumber,
     generateLottoNumbers
 }

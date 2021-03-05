@@ -5,7 +5,8 @@
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
-    "clean": "rm -rf artifacts && rm -rf cache"
+    "clean": "rm -rf artifacts && rm -rf cache",
+    "ttest": "npx hardhat node"
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.1",
