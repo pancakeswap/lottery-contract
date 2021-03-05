@@ -51,18 +51,23 @@ describe("Lottery contract", function() {
     });
 
     describe("Creating a new lottery tests", function() {
+        /**
+         * Tests that in the nominal case nothing goes wrong
+         */
         it("Nominal case", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await lotteryInstance.getTime();
+            let currentTimeStamp = await provider.getBlock("latest");
+            // Converting it to a format contracts can understand
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
             // Creating a new lottery
             await expect(
                 lotteryInstance.connect(owner).createNewLotto(
                     lotto.newLotto.distribution,
                     lotto.newLotto.prize,
                     lotto.newLotto.cost,
-                    currentTimeStamp.toString(),
-                    currentTimeStamp.add(1000).toString(),
-                    currentTimeStamp.add(2000).toString()
+                    timeStamp.toString(),
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
                 )
             ).to.emit(lotteryInstance, lotto.events.new)
             // Checking that emitted event contains correct information
@@ -72,21 +77,124 @@ describe("Lottery contract", function() {
                 lotto.newLotto.distribution,
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
-                currentTimeStamp.toString(),
-                currentTimeStamp.add(1000).toString(),
-                currentTimeStamp.add(2000).toString(),
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString(),
                 owner.address
             );
         });
-
-        it("Non-admin attempt", async function() {
-            // await assert.revertWith(
-            //     curveInstance.from(user).mint(
-            //         test_settings.bzz.buyAmount,
-            //         buyCost
-            //     ),
-            //     test_settings.errors.max_spend
-            // );
+        /**
+         * Testing that non-admins cannot create a lotto
+         */
+        it("Invalid admin", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await provider.getBlock("latest");
+            // Converting it to a format contracts can understand
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            // Checking call reverts with correct error message
+            await expect(
+                lotteryInstance.connect(buyer).createNewLotto(
+                    lotto.newLotto.distribution,
+                    lotto.newLotto.prize,
+                    lotto.newLotto.cost,
+                    timeStamp.toString(),
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_admin);
+        });
+        /**
+         * Testing that an invalid distribution will fail
+         */
+        it("Invalid price distribution", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await provider.getBlock("latest");
+            // Converting it to a format contracts can understand
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            // Checking call reverts with correct error message
+            await expect(
+                lotteryInstance.connect(owner).createNewLotto(
+                    lotto.errorData.distribution,
+                    lotto.newLotto.prize,
+                    lotto.newLotto.cost,
+                    timeStamp.toString(),
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_distribution);
+        });
+        /**
+         * Testing that an invalid prize and cost will fail
+         */
+        it("Invalid price distribution", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await provider.getBlock("latest");
+            // Converting it to a format contracts can understand
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            // Checking call reverts with correct error message
+            await expect(
+                lotteryInstance.connect(owner).createNewLotto(
+                    lotto.newLotto.distribution,
+                    lotto.errorData.prize,
+                    lotto.newLotto.cost,
+                    timeStamp.toString(),
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_price_or_cost);
+            // Checking call reverts with correct error message
+            await expect(
+                lotteryInstance.connect(owner).createNewLotto(
+                    lotto.newLotto.distribution,
+                    lotto.newLotto.prize,
+                    lotto.errorData.cost,
+                    timeStamp.toString(),
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_price_or_cost);
+        });
+        /**
+         * Testing that an invalid prize and cost will fail
+         */
+        it("Invalid timestamps", async function() {
+            // Getting the current block timestamp
+            let currentTimeStamp = await provider.getBlock("latest");
+            // Converting it to a format contracts can understand
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            // Checking call reverts with correct error message
+            await expect(
+                lotteryInstance.connect(owner).createNewLotto(
+                    lotto.newLotto.distribution,
+                    lotto.newLotto.prize,
+                    lotto.newLotto.cost,
+                    lotto.errorData.startTime,
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_timestamp);
+            // Checking call reverts with correct error message
+            await expect(
+                lotteryInstance.connect(owner).createNewLotto(
+                    lotto.newLotto.distribution,
+                    lotto.newLotto.prize,
+                    lotto.newLotto.cost,
+                    timeStamp.toString(),
+                    timeStamp.toString(),
+                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_timestamp);
+            // Checking call reverts with correct error message
+            await expect(
+                lotteryInstance.connect(owner).createNewLotto(
+                    lotto.newLotto.distribution,
+                    lotto.newLotto.prize,
+                    lotto.newLotto.cost,
+                    timeStamp.toString(),
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                    timeStamp.toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_timestamp);
         });
     });
 
@@ -97,29 +205,42 @@ describe("Lottery contract", function() {
          */
         beforeEach( async () => {
             // Getting the current block timestamp
-
             let currentTimeStamp = await provider.getBlock("latest");
-            
+            // Converting it to a format contracts can understand
             let timeStamp = new BigNumber(currentTimeStamp.timestamp);
-
             // Creating a new lottery
             await lotteryInstance.connect(owner).createNewLotto(
                 lotto.newLotto.distribution,
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(1000).toString(),
-                timeStamp.plus(2000).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString()
             );
         });
-
+        /**
+         * Tests cost per ticket is as expected
+         */
         it("Cost per ticket", async function() {
-            let price = await lotteryInstance.costToBuyTickets(
+            let totalPrice = await lotteryInstance.costToBuyTickets(
                 1,
-                5
+                10
             );
-
-            console.log(price.toString())
+            // Works back from totalPrice to one token cost
+            let check = BigNumber(totalPrice.toString());
+            let noOfTickets = new BigNumber(10);
+            let oneCost = check.div(noOfTickets);
+            // Checks price is correct
+            assert.equal(
+                totalPrice.toString(),
+                lotto.buy.ten.cost,
+                "Incorrect cost for batch buy of 10"
+            );
+            assert.equal(
+                oneCost.toString(),
+                lotto.newLotto.cost.toString(),
+                "Incorrect cost for batch buy of 10"
+            );
         });
         /**
          * Tests the batch buying of one token
@@ -257,24 +378,117 @@ describe("Lottery contract", function() {
                 "Incorrect cost for max batch buy of 110"
             );
         }); 
+        /**
+         * Tests the batch buying with invalid ticket numbers
+         */
+        it("Invalid chosen numbers", async function() {
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                10
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 9, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Approving lotto to spend cost
+            await cakeInstance.connect(owner).approve(
+                lotteryInstance.address,
+                price
+            );
+            // Batch buying tokens
+            await expect(
+                lotteryInstance.connect(owner).batchBuyLottoTicket(
+                    1,
+                    10,
+                    ticketNumbers
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_mint_numbers);
+        });
+        /**
+         * Tests the batch buying with invalid approve
+         */
+        it("Invalid cake transfer", async function() {
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                10
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 10, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await expect(
+                lotteryInstance.connect(owner).batchBuyLottoTicket(
+                    1,
+                    10,
+                    ticketNumbers
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_mint_approve);
+        });
+        /**
+         * Tests the batch buying after the valid time period fails
+         */
+        it("Invalid buying time", async function() {
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                10
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 10, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Approving lotto to spend cost
+            await cakeInstance.connect(owner).approve(
+                lotteryInstance.address,
+                price
+            );
+            // Getting time for next block to make buy invalid
+            let currentTimeStamp = await provider.getBlock("latest");
+            // Converting it to a format contracts can understand
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            // Making timestamp too far in the future
+            let futureTimestamp = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Setting the time forward 
+            await network.provider.send("evm_increaseTime", [lotto.newLotto.closeIncrease])
+            // Batch buying tokens
+            await expect(
+                lotteryInstance.connect(owner).batchBuyLottoTicket(
+                    1,
+                    10,
+                    ticketNumbers
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_mint_timestamp);
+        });
     });
 
     describe("View function tests", function() {
         it("Get Lotto Info", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await lotteryInstance.getTime();
+            let currentTimeStamp = await provider.getBlock("latest");
+            // Converting it to a format contracts can understand
+            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
             // Creating a new lottery
             await lotteryInstance.connect(owner).createNewLotto(
                 lotto.newLotto.distribution,
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
-                currentTimeStamp.toString(),
-                currentTimeStamp.add(1000).toString(),
-                currentTimeStamp.add(2000).toString()
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString()
             );
 
             let lottoInfo = await lotteryInstance.getBasicLottoInfo(1);
-            console.log(lottoInfo.prizePoolInCake.toString())
+            // console.log(lottoInfo.prizePoolInCake.toString())
+            // TODO
         });
     });
 });

@@ -191,18 +191,28 @@ contract Lotto is Ownable {
         onlyOwner()
         returns(uint256 lottoID)
     {
-        lotteryIDCounter_.increment();
-
         uint256 prizeDistributionTotal = 0;
         for (uint256 j = 0; j < _prizeDistribution.length; j += 1) {
             prizeDistributionTotal += uint256(_prizeDistribution[j]);
         }
-
+        // Ensuring that prize distribution total is 100%
         require(
             prizeDistributionTotal == 100,
             "Prize distribution is not 100%"
         );
-
+        require(
+            _prizePoolInCake != 0 && _costPerTicket != 0,
+            "Prize or cost cannot be 0"
+        );
+        require(
+            _startingBlock != 0 &&
+            _startingBlock < _closingBlock &&
+            _closingBlock < _endBlock,
+            "Timestamps for lottery invalid"
+        );
+        // Incrementing lottery ID 
+        lotteryIDCounter_.increment();
+        // Saving data in struct
         allLotteries_[lotteryIDCounter_.current()].lotteryID = lotteryIDCounter_.current();
         allLotteries_[lotteryIDCounter_.current()].lotteryStatus = Status.NotStarted;
         allLotteries_[lotteryIDCounter_.current()].prizePoolInCake = _prizePoolInCake;
