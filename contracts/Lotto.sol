@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./ILottoNFT.sol";
+// TODO remove
+import "hardhat/console.sol";
 
 // TODO rename to Lottery when done
 contract Lotto is Ownable {
@@ -24,9 +26,9 @@ contract Lotto is Ownable {
     ILottoNFT internal nft_;
 
     // Lottery size
-    uint8 internal sizeOfLottery_;
+    uint8 public sizeOfLottery_;
     // Max range for numbers (starting at 0)
-    uint8 internal maxValidRange_;
+    uint8 public maxValidRange_;
 
     // Represents the status of the lottery
     enum Status { 
@@ -102,13 +104,6 @@ contract Lotto is Ownable {
     //-------------------------------------------------------------------------
     // VIEW FUNCTIONS
     //-------------------------------------------------------------------------
-
-    /**
-      * @return Gets the current time
-      */
-    function getTime() public view returns(uint256) {
-        return block.timestamp;
-    }
 
     function costToBuyTickets(
         uint256 _lotteryID,
@@ -198,9 +193,9 @@ contract Lotto is Ownable {
     {
         lotteryIDCounter_.increment();
 
-        uint32 prizeDistributionTotal = 0;
-        for(uint8 i; i > _prizeDistribution.length; i++) {
-            prizeDistributionTotal += _prizeDistribution[i];
+        uint256 prizeDistributionTotal = 0;
+        for (uint256 j = 0; j < _prizeDistribution.length; j += 1) {
+            prizeDistributionTotal += uint256(_prizeDistribution[j]);
         }
 
         require(
