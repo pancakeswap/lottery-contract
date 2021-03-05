@@ -10,10 +10,12 @@ const lotto = {
         distribution: [5, 10, 15, 20, 50],
         prize: ethers.utils.parseUnits("1000", 18),
         cost: ethers.utils.parseUnits("10", 18),
+        closeIncrease: 10000,
+        endIncrease: 20000
     }, 
     events: {
-        new: "newLotteryCreated",
-        mint: "newBatchMint"
+        new: "NewLotteryCreated",
+        mint: "NewBatchMint"
     },
     buy: {
         cake: ethers.utils.parseUnits("10000000", 18),
@@ -29,6 +31,21 @@ const lotto = {
         max: {
             cost: "1100000000000000000000"
         }
+    },
+    errorData: {
+        distribution: [5, 10, 15, 20, 10],
+        prize: ethers.utils.parseUnits("0", 18),
+        cost: ethers.utils.parseUnits("0", 18),
+        startTime: ethers.utils.parseUnits("0", 18),
+    },
+    errors: {
+        invalid_admin: "Ownable: caller is not the owner",
+        invalid_distribution: "Prize distribution is not 100%",
+        invalid_price_or_cost: "Prize or cost cannot be 0",
+        invalid_timestamp: "Timestamps for lottery invalid",
+        invalid_mint_timestamp: "Invalid time for mint",
+        invalid_mint_numbers: "Invalid chosen numbers",
+        invalid_mint_approve: "ERC20: transfer amount exceeds allowance"
     }
 }
 const lottoNFT = {

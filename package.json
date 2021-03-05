@@ -6,6 +6,7 @@
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
     "clean": "rm -rf artifacts && rm -rf cache",
+    "cover": "npx hardhat coverage",
     "ttest": "npx hardhat node"
   },
   "dependencies": {
@@ -18,7 +19,8 @@
     "ethereum-waffle": "3.2.2",
     "ethers": "5.0.31",
     "hardhat": "2.0.11",
-    "hardhat-gas-reporter": "^1.0.4"
+    "hardhat-gas-reporter": "^1.0.4",
+    "solidity-coverage": "^0.7.16"
   },
   "devDependencies": {}
 }
