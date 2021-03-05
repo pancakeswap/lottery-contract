@@ -54,7 +54,7 @@ contract Lotto is Ownable {
     // EVENTS
     //-------------------------------------------------------------------------
 
-    event newLotteryCreated(
+    event NewLotteryCreated(
         uint256 indexed lottoID,
         Status lotteryStatus,
         uint8[] prizeDistribution,
@@ -66,7 +66,7 @@ contract Lotto is Ownable {
         address indexed creator
     );
 
-    event newBatchMint(
+    event NewBatchMint(
         address indexed minter,
         uint256[] ticketIDs,
         uint32[] numbers,
@@ -139,7 +139,7 @@ contract Lotto is Ownable {
     //-------------------------------------------------------------------------
     // Restricted Access Functions
 
-    function updateSizeOfLottery(uint8 _newSize) public onlyOwner() {
+    function updateSizeOfLottery(uint8 _newSize) external onlyOwner() {
         require(
             sizeOfLottery_ != _newSize,
             "Cannot set to current size"
@@ -147,7 +147,7 @@ contract Lotto is Ownable {
         sizeOfLottery_ = _newSize;
     }
 
-    function updateMaxRange(uint8 _newMaxRange) public onlyOwner() {
+    function updateMaxRange(uint8 _newMaxRange) external onlyOwner() {
         require(
             maxValidRange_ != _newMaxRange,
             "Cannot set to current size"
@@ -156,7 +156,7 @@ contract Lotto is Ownable {
     }
 
 
-    function drawWinningNumbers(uint256 _lottoID) public onlyOwner() {
+    function drawWinningNumbers(uint256 _lottoID) external onlyOwner() {
         // Creating space for winning numbers
         uint8[] memory winningNumbers;
         // TODO will call ChainLink VRF
@@ -192,11 +192,21 @@ contract Lotto is Ownable {
         uint256 _closingBlock,
         uint256 _endBlock
     )
-        public
+        external
         onlyOwner()
         returns(uint256 lottoID)
     {
         lotteryIDCounter_.increment();
+
+        uint32 prizeDistributionTotal = 0;
+        for(uint8 i; i > _prizeDistribution.length; i++) {
+            prizeDistributionTotal += _prizeDistribution[i];
+        }
+
+        require(
+            prizeDistributionTotal == 100,
+            "Prize distribution is not 100%"
+        );
 
         allLotteries_[lotteryIDCounter_.current()].lotteryID = lotteryIDCounter_.current();
         allLotteries_[lotteryIDCounter_.current()].lotteryStatus = Status.NotStarted;
@@ -207,7 +217,7 @@ contract Lotto is Ownable {
         allLotteries_[lotteryIDCounter_.current()].closingBlock = _closingBlock;
         allLotteries_[lotteryIDCounter_.current()].endBlock = _endBlock;
         // Emitting important information around new lottery.
-        emit newLotteryCreated(
+        emit NewLotteryCreated(
             lotteryIDCounter_.current(),
             Status.NotStarted,
             _prizeDistribution,
@@ -220,23 +230,23 @@ contract Lotto is Ownable {
         );
     }
 
-    function check(uint256 _numberOfTickets) public view returns(uint256) {
-        uint256 numberCheck = _numberOfTickets*sizeOfLottery_;
-        return numberCheck;
-    }
-
     function batchBuyLottoTicket(
         uint256 _lotteryID,
         uint32 _numberOfTickets,
         uint32[] memory _chosenNumbersForEachTicket
     )
-        public
+        external
         returns(uint256[] memory ticketIds)
     {
+        require(
+            block.timestamp >= allLotteries_[_lotteryID].startingBlock &&
+            block.timestamp < allLotteries_[_lotteryID].closingBlock,
+            "Invalid time for mint"
+        );
         uint256 numberCheck = _numberOfTickets*sizeOfLottery_;
         require(
             _chosenNumbersForEachTicket.length == numberCheck,
-            "Incorrect number of chosen numbers"
+            "Invalid chosen numbers"
         );
         // Gets the cost per ticket
         uint256 costPerTicket = allLotteries_[_lotteryID].costPerTicket;
@@ -259,7 +269,7 @@ contract Lotto is Ownable {
             _numberOfTickets,
             _chosenNumbersForEachTicket
         );
-        emit newBatchMint(
+        emit NewBatchMint(
             msg.sender,
             ticketIds,
             _chosenNumbersForEachTicket,

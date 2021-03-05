@@ -31,7 +31,7 @@ contract LottoNFT is ERC1155, Ownable {
     // EVENTS
     //-------------------------------------------------------------------------
 
-    event infoBatchMint(
+    event InfoBatchMint(
         address indexed receiving, 
         uint256 amountOfTokens, 
         uint256[] tokenIDs
@@ -122,9 +122,9 @@ contract LottoNFT is ERC1155, Ownable {
         address _to,
         uint256 _lottoID,
         uint32 _numberOfTickets,
-        uint32[] memory _numbers
+        uint32[] calldata _numbers
     )
-        public
+        external
         onlyLotto()
         returns(uint256[] memory)
     {
@@ -159,28 +159,13 @@ contract LottoNFT is ERC1155, Ownable {
         );
         // TODO might want to hardcode bytes passed in (msg.data) to be blank
         // Emitting relevant info
-        emit infoBatchMint(
+        emit InfoBatchMint(
             _to, 
             _numberOfTickets, 
             tokenIDs
         ); 
 
         return tokenIDs;
-    }
-
-    function batchMintInternal(
-        address _to, 
-        uint256[] memory _tokenIDs, 
-        uint256[] memory _amounts
-    ) 
-        public 
-    {
-        _mintBatch(
-            _to,
-            _tokenIDs,
-            _amounts,
-            msg.data
-        );
     }
 
     //-------------------------------------------------------------------------
