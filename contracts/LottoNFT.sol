@@ -5,8 +5,9 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./Testable.sol";
 
-contract LottoNFT is ERC1155, Ownable {
+contract LottoNFT is ERC1155, Ownable, Testable {
     // Counter for token IDs
     uint256 internal tokenIDsCount_ = 0;
     // State variables 
@@ -93,11 +94,11 @@ contract LottoNFT is ERC1155, Ownable {
      */
     constructor(
         string memory _uri,
-        address _lotto
+        address _lotto,
+        address _timer
     ) 
-    ERC1155(
-        _uri
-    ) 
+    ERC1155(_uri)
+    Testable(_timer)
     {
         // Only Lotto contract will be able to mint new tokens
         lottoContract_ = _lotto;

@@ -1,5 +1,4 @@
 const { expect, assert } = require("chai");
-const { providers } = require("ethers");
 const { network } = require("hardhat");
 const { 
     lotto,
@@ -15,10 +14,10 @@ describe("Lottery contract", function() {
     let lotteryNftInstance, lotteryNftContract;
     // Creating the instance and contract info for the cake token contract
     let cakeInstance, cakeContract;
+    // Creating the instance and contract info for the timer contract
+    let timerInstance, timerContract;
     // Creating the users
     let owner, buyer;
-    // Setting the provider to enable getting timestamps 
-    let provider = new ethers.providers.JsonRpcProvider();
 
     beforeEach(async () => {
         // Getting the signers provided by ethers
@@ -32,18 +31,23 @@ describe("Lottery contract", function() {
         lotteryNftContract = await ethers.getContractFactory("LottoNFT");
         // Getting the lotteryNFT code (abi, bytecode, name)
         cakeContract = await ethers.getContractFactory("Mock_erc20");
+        // Getting the timer code (abi, bytecode, name)
+        timerContract = await ethers.getContractFactory("Timer");
         // Deploying the instances
+        timerInstance = await timerContract.deploy();
         cakeInstance = await cakeContract.deploy(
             lotto.buy.cake,
         );
         lotteryInstance = await lotteryContract.deploy(
             cakeInstance.address,
+            timerInstance.address,
             lotto.setup.sizeOfLottery,
-            lotto.setup.maxValidRange,
+            lotto.setup.maxValidRange
         );
         lotteryNftInstance = await lotteryNftContract.deploy(
             lottoNFT.newLottoNft.uri,
-            lotteryInstance.address
+            lotteryInstance.address,
+            timerInstance.address
         );
         await lotteryInstance.init(
             lotteryNftInstance.address
@@ -56,9 +60,9 @@ describe("Lottery contract", function() {
          */
         it("Nominal case", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
             // Creating a new lottery
             await expect(
                 lotteryInstance.connect(owner).createNewLotto(
@@ -88,9 +92,9 @@ describe("Lottery contract", function() {
          */
         it("Invalid admin", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
             // Checking call reverts with correct error message
             await expect(
                 lotteryInstance.connect(buyer).createNewLotto(
@@ -108,9 +112,9 @@ describe("Lottery contract", function() {
          */
         it("Invalid price distribution", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
             // Checking call reverts with correct error message
             await expect(
                 lotteryInstance.connect(owner).createNewLotto(
@@ -128,9 +132,9 @@ describe("Lottery contract", function() {
          */
         it("Invalid price distribution", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
             // Checking call reverts with correct error message
             await expect(
                 lotteryInstance.connect(owner).createNewLotto(
@@ -159,9 +163,9 @@ describe("Lottery contract", function() {
          */
         it("Invalid timestamps", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
             // Checking call reverts with correct error message
             await expect(
                 lotteryInstance.connect(owner).createNewLotto(
@@ -205,9 +209,9 @@ describe("Lottery contract", function() {
          */
         beforeEach( async () => {
             // Getting the current block timestamp
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
             // Creating a new lottery
             await lotteryInstance.connect(owner).createNewLotto(
                 lotto.newLotto.distribution,
@@ -451,14 +455,14 @@ describe("Lottery contract", function() {
                 lotteryInstance.address,
                 price
             );
-            // Getting time for next block to make buy invalid
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
-            // Making timestamp too far in the future
-            let futureTimestamp = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Getting the timestamp for invalid time for buying
+            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
-            await network.provider.send("evm_increaseTime", [lotto.newLotto.closeIncrease])
+            await lotteryInstance.setCurrentTime(futureTime.toString());
             // Batch buying tokens
             await expect(
                 lotteryInstance.connect(owner).batchBuyLottoTicket(
@@ -473,9 +477,9 @@ describe("Lottery contract", function() {
     describe("View function tests", function() {
         it("Get Lotto Info", async function() {
             // Getting the current block timestamp
-            let currentTimeStamp = await provider.getBlock("latest");
-            // Converting it to a format contracts can understand
-            let timeStamp = new BigNumber(currentTimeStamp.timestamp);
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
             // Creating a new lottery
             await lotteryInstance.connect(owner).createNewLotto(
                 lotto.newLotto.distribution,
@@ -485,10 +489,39 @@ describe("Lottery contract", function() {
                 timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
                 timeStamp.plus(lotto.newLotto.endIncrease).toString()
             );
-
+            // Getting the basic info around this lottery
             let lottoInfo = await lotteryInstance.getBasicLottoInfo(1);
-            // console.log(lottoInfo.prizePoolInCake.toString())
-            // TODO
+            // Testing they are correct
+            assert.equal(
+                lottoInfo.prizeDistribution.toString(),
+                lotto.newLotto.distribution.toString(),
+                "Invalid distribution"
+            );
+            assert.equal(
+                lottoInfo.prizePoolInCake.toString(),
+                lotto.newLotto.prize.toString(),
+                "Invalid prize pool"
+            );
+            assert.equal(
+                lottoInfo.costPerTicket.toString(),
+                lotto.newLotto.cost,
+                "Invalid cost per token"
+            );
+            assert.equal(
+                lottoInfo.startingBlock.toString(),
+                timeStamp.toString(),
+                "Invalid starting time"
+            );
+            assert.equal(
+                lottoInfo.closingBlock.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                "Invalid starting time"
+            );
+            assert.equal(
+                lottoInfo.endBlock.toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString(),
+                "Invalid starting time"
+            );
         });
     });
 });
