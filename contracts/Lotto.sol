@@ -1,16 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.7.3;
 pragma experimental ABIEncoderV2;
-
+// Imported OZ helper contracts
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+// Inherited allowing for ownership of contract
+import "@openzeppelin/contracts/access/Ownable.sol";
+// Allows for intergration with ChainLink VRF
+import "./IVRFConsumerBase.sol";
+// Interface for Lottery NFT to mint tokens
 import "./ILottoNFT.sol";
+// Allows for time manipulation. Set to 0x address on test/mainnet deploy
 import "./Testable.sol";
 
 // TODO rename to Lottery when done
-contract Lotto is Ownable, Testable {
+contract Lotto is Ownable, IVRFConsumerBase, Testable {
     // Libraries 
     // Counter for lottery IDs
     using Counters for Counters.Counter;
