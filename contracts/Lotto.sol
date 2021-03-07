@@ -7,11 +7,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./ILottoNFT.sol";
-// TODO remove
-import "hardhat/console.sol";
+import "./Testable.sol";
 
 // TODO rename to Lottery when done
-contract Lotto is Ownable {
+contract Lotto is Ownable, Testable {
     // Libraries 
     // Counter for lottery IDs
     using Counters for Counters.Counter;
@@ -89,9 +88,12 @@ contract Lotto is Ownable {
 
     constructor(
         address _cake, 
+        address _timer,
         uint8 _sizeOfLotteryNumbers,
-        uint8 _maxValidNumberRange    
-    ) {
+        uint8 _maxValidNumberRange
+    ) 
+        Testable(_timer)
+    {
         cake_ = IERC20(_cake);
         sizeOfLottery_ = _sizeOfLotteryNumbers;
         maxValidRange_ = _maxValidNumberRange;
@@ -244,9 +246,12 @@ contract Lotto is Ownable {
         returns(uint256[] memory ticketIds)
     {
         require(
-            block.timestamp >= allLotteries_[_lotteryID].startingBlock &&
-            block.timestamp < allLotteries_[_lotteryID].closingBlock,
-            "Invalid time for mint"
+            getCurrentTime() >= allLotteries_[_lotteryID].startingBlock,
+            "Invalid time for mint:start"
+        );
+        require(
+            getCurrentTime() < allLotteries_[_lotteryID].closingBlock,
+            "Invalid time for mint:end"
         );
         uint256 numberCheck = _numberOfTickets*sizeOfLottery_;
         require(
@@ -287,8 +292,6 @@ contract Lotto is Ownable {
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
         // TODO
-        
-
     }
 
     //-------------------------------------------------------------------------

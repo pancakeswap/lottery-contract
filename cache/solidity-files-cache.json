@@ -24,9 +24,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -65,9 +62,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -109,9 +103,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -150,9 +141,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -187,9 +175,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -226,9 +211,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -263,9 +245,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -278,8 +257,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1614959558445,
-      "contentHash": "4cd937a3edbbdb27694287d22531b818",
+      "lastModificationDate": 1615133863423,
+      "contentHash": "0fac7acd1f1e32323c6c3eb1e4b54f39",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -300,9 +279,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -312,7 +288,7 @@
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/math/SafeMath.sol",
         "./ILottoNFT.sol",
-        "hardhat/console.sol"
+        "./Testable.sol"
       ],
       "versionPragmas": [
         "0.7.3"
@@ -322,7 +298,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1614176676871,
+      "lastModificationDate": 1615130062475,
       "contentHash": "e0a41531d159d3a32f84b7a3ecf9fabb",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
@@ -344,9 +320,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -359,7 +332,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/utils/Counters.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060028,
       "contentHash": "304a56eb1322144704fb39f8c7e6d722",
       "sourceName": "@openzeppelin/contracts/utils/Counters.sol",
       "solcConfig": {
@@ -381,9 +354,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -398,7 +368,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060014,
       "contentHash": "6748815a5b45c4aeeda56819f41190e0",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -420,9 +390,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -437,7 +404,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060016,
       "contentHash": "e03e12206057e809eb76c5f681170c32",
       "sourceName": "@openzeppelin/contracts/math/SafeMath.sol",
       "solcConfig": {
@@ -459,9 +426,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -473,45 +437,8 @@
         "SafeMath"
       ]
     },
-    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1614176544642,
-      "contentHash": "cc4777addd464ea56fa35b1c45df0591",
-      "sourceName": "hardhat/console.sol",
-      "solcConfig": {
-        "version": "0.7.3",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          },
-          "metadata": {
-            "useLiteralContent": false
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.4.22 <0.9.0"
-      ],
-      "artifacts": [
-        "console"
-      ]
-    },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060028,
       "contentHash": "2adbd82f6d055a4751566d4671512b03",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
@@ -533,9 +460,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -548,7 +472,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC20/SafeERC20.sol": {
-      "lastModificationDate": 1614176676871,
+      "lastModificationDate": 1615130062475,
       "contentHash": "33e22842646d746e5c4124c2fdc051aa",
       "sourceName": "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
       "solcConfig": {
@@ -570,9 +494,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -589,7 +510,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060030,
       "contentHash": "7aa46886ff5abe7515496208a5e2ce5a",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
       "solcConfig": {
@@ -611,9 +532,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -626,7 +544,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/proxy/Initializable.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060041,
       "contentHash": "1efacd801320f8f9413700ddbcf00647",
       "sourceName": "@openzeppelin/contracts/proxy/Initializable.sol",
       "solcConfig": {
@@ -648,9 +566,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -665,7 +580,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/proxy/UpgradeableProxy.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060041,
       "contentHash": "c163cbd51d0173b71c8137b0ddf1e0ba",
       "sourceName": "@openzeppelin/contracts/proxy/UpgradeableProxy.sol",
       "solcConfig": {
@@ -687,9 +602,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -705,7 +617,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060041,
       "contentHash": "52841a5095656ecbf7bc86cd6c114699",
       "sourceName": "@openzeppelin/contracts/proxy/Proxy.sol",
       "solcConfig": {
@@ -727,9 +639,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -742,7 +651,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060041,
       "contentHash": "572da86d0eb185b41f85df7d2d75378b",
       "sourceName": "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol",
       "solcConfig": {
@@ -764,9 +673,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -781,7 +687,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062477,
       "contentHash": "eabcb7fd9472ae9ca34c07172a39f210",
       "sourceName": "@openzeppelin/contracts/token/ERC721/ERC721.sol",
       "solcConfig": {
@@ -803,9 +709,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -830,7 +733,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062477,
       "contentHash": "e82621b83943f11c44988c60e83d6ebc",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
       "solcConfig": {
@@ -852,9 +755,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -869,7 +769,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062480,
       "contentHash": "370e7a48f316401b5063bcb604843e1b",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol",
       "solcConfig": {
@@ -891,9 +791,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -908,7 +805,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062477,
       "contentHash": "eaebc3874248c26f6ea0b13b9a140a94",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol",
       "solcConfig": {
@@ -930,9 +827,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -947,7 +841,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062480,
       "contentHash": "fad0b3f4424bdbb4b35467b29ea8d334",
       "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
       "solcConfig": {
@@ -969,9 +863,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -984,7 +875,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/introspection/ERC165.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060019,
       "contentHash": "08f854e2dd3c262845bba38c9b48e4e0",
       "sourceName": "@openzeppelin/contracts/introspection/ERC165.sol",
       "solcConfig": {
@@ -1006,9 +897,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1023,7 +911,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/utils/EnumerableSet.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060038,
       "contentHash": "db7b1afdb2c204e1e52100b79f0c847e",
       "sourceName": "@openzeppelin/contracts/utils/EnumerableSet.sol",
       "solcConfig": {
@@ -1045,9 +933,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1060,7 +945,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/utils/EnumerableMap.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060036,
       "contentHash": "b1bb8570824c668943149211d74d6c51",
       "sourceName": "@openzeppelin/contracts/utils/EnumerableMap.sol",
       "solcConfig": {
@@ -1082,9 +967,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1097,7 +979,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060038,
       "contentHash": "c86a31bacf868d392eda08a0eccc4735",
       "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
       "solcConfig": {
@@ -1119,9 +1001,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1134,7 +1013,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/introspection/IERC165.sol": {
-      "lastModificationDate": 1614176676862,
+      "lastModificationDate": 1615130060021,
       "contentHash": "0d62a8380952235f135dae91590f90a3",
       "sourceName": "@openzeppelin/contracts/introspection/IERC165.sol",
       "solcConfig": {
@@ -1156,9 +1035,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1171,7 +1047,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062481,
       "contentHash": "27af002e8fc1118d099c99fc8852bb73",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol",
       "solcConfig": {
@@ -1193,9 +1069,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1210,7 +1083,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol": {
-      "lastModificationDate": 1614176676871,
+      "lastModificationDate": 1615130062481,
       "contentHash": "33407bb7ff4811650cd1c328e646e55d",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
       "solcConfig": {
@@ -1232,9 +1105,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1255,7 +1125,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062481,
       "contentHash": "cb9dc62067a205eeab4f390c72c7fe14",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155.sol",
       "solcConfig": {
@@ -1277,9 +1147,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1294,7 +1161,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155MetadataURI.sol": {
-      "lastModificationDate": 1614176676872,
+      "lastModificationDate": 1615130062481,
       "contentHash": "9a313e25e2a837a50f7ae87017539457",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155MetadataURI.sol",
       "solcConfig": {
@@ -1316,9 +1183,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1333,7 +1197,7 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-      "lastModificationDate": 1614176676871,
+      "lastModificationDate": 1615130062474,
       "contentHash": "8065b340476f61365c076897199425f1",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
@@ -1355,9 +1219,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1396,9 +1257,6 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
@@ -1413,8 +1271,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LottoNFT.sol": {
-      "lastModificationDate": 1614948211644,
-      "contentHash": "50cace1c71473d679b106cba26e06805",
+      "lastModificationDate": 1615132354128,
+      "contentHash": "adbd06e26872604d7dd00ecd0a9fe074",
       "sourceName": "contracts/LottoNFT.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -1435,16 +1293,14 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
       "imports": [
         "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
-        "@openzeppelin/contracts/utils/Counters.sol"
+        "@openzeppelin/contracts/utils/Counters.sol",
+        "./Testable.sol"
       ],
       "versionPragmas": [
         "0.7.3"
@@ -1476,15 +1332,82 @@
                 "ast"
               ]
             }
-          },
-          "metadata": {
-            "useLiteralContent": false
           }
         }
       },
       "imports": [],
       "versionPragmas": [],
       "artifacts": []
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Testable.sol": {
+      "lastModificationDate": 1615132186171,
+      "contentHash": "c73bcc4e7c1fcaa864c18ecfbdb57208",
+      "sourceName": "contracts/Testable.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Timer.sol"
+      ],
+      "versionPragmas": [
+        "0.7.3"
+      ],
+      "artifacts": [
+        "Testable"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Timer.sol": {
+      "lastModificationDate": 1615132179685,
+      "contentHash": "e42da3268d64cbfddec7ae3ddc2b90aa",
+      "sourceName": "contracts/Timer.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.7.3"
+      ],
+      "artifacts": [
+        "Timer"
+      ]
     }
   }
 }
