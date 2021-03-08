@@ -11,7 +11,9 @@ const lotto = {
         prize: ethers.utils.parseUnits("1000", 18),
         cost: ethers.utils.parseUnits("10", 18),
         closeIncrease: 10000,
-        endIncrease: 20000
+        endIncrease: 20000,
+        blankWinningNumbers: "0,0,0,0",
+        simpleWinningNumbers: "1,2,3,4"
     }, 
     events: {
         new: "NewLotteryCreated",
@@ -25,11 +27,11 @@ const lotto = {
         ten: {
             cost: "100000000000000000000"
         },
-        one_hundred: {
-            cost: "1000000000000000000000"
+        fifty: {
+            cost: "500000000000000000000"
         },
-        max: {
-            cost: "1100000000000000000000"
+        seventy_five: {
+            cost: "750000000000000000000"
         }
     },
     errorData: {
@@ -45,7 +47,9 @@ const lotto = {
         invalid_timestamp: "Timestamps for lottery invalid",
         invalid_mint_timestamp: "Invalid time for mint",
         invalid_mint_numbers: "Invalid chosen numbers",
-        invalid_mint_approve: "ERC20: transfer amount exceeds allowance"
+        invalid_mint_approve: "ERC20: transfer amount exceeds allowance",
+        invalid_draw_time: "Cannot set winning numbers during lottery",
+        invalid_draw_repeat: "Winning Numbers chosen"
     }
 }
 const lottoNFT = {

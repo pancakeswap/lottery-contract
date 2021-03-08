@@ -3,6 +3,7 @@ pragma solidity 0.7.3;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -17,6 +18,8 @@ contract Lotto is Ownable, Testable {
     Counters.Counter private lotteryIDCounter_;
     // Safe math
     using SafeMath for uint256;
+    // Safe ERC20
+    using SafeERC20 for IERC20;
 
     // State variables 
     // Instance of Cake token (collateral currency for lotto)
@@ -46,7 +49,7 @@ contract Lotto is Ownable, Testable {
         uint256 startingBlock;      // Block timestamp for star of lotto
         uint256 closingBlock;       // Block timestamp for end of entries
         uint256 endBlock;           // Block timestamp for claiming winnings
-        uint8[] winningNumbers;     // The winning numbers
+        uint32[] winningNumbers;     // The winning numbers
     }
     // Lottery ID's to info
     mapping(uint256 => LottoInfo) internal allLotteries_;
@@ -152,14 +155,18 @@ contract Lotto is Ownable, Testable {
     }
 
 
-    function drawWinningNumbers(uint256 _lottoID) external onlyOwner() {
-        // Creating space for winning numbers
-        uint8[] memory winningNumbers;
-        // TODO will call ChainLink VRF
-        for (uint8 i = 0; i < sizeOfLottery_; i++) {
-            winningNumbers[i] = i;
-        }
-        allLotteries_[_lottoID].winningNumbers = winningNumbers;
+    function drawWinningNumbers(uint256 _lottoID, uint32[] memory _winningNumbers) external onlyOwner() {
+        require(
+            allLotteries_[_lottoID].lotteryStatus != Status.Completed,
+            "Winning Numbers chosen"
+        );
+        require(
+            allLotteries_[_lottoID].closingBlock <= getCurrentTime(),
+            "Cannot set winning numbers during lottery"
+        );
+        // TODO ChainLink VRF 
+        allLotteries_[_lottoID].winningNumbers = _winningNumbers;
+        allLotteries_[_lottoID].lotteryStatus = Status.Completed;
     }
 
     /**
@@ -213,7 +220,7 @@ contract Lotto is Ownable, Testable {
         );
         // Incrementing lottery ID 
         lotteryIDCounter_.increment();
-        uint8[] memory winningNumbers = new uint8[](sizeOfLottery_);
+        uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
         // Saving data in struct
         LottoInfo memory newLottery = LottoInfo(
             lotteryIDCounter_.current(),
@@ -285,7 +292,8 @@ contract Lotto is Ownable, Testable {
             msg.sender,
             _lotteryID,
             _numberOfTickets,
-            _chosenNumbersForEachTicket
+            _chosenNumbersForEachTicket,
+            sizeOfLottery_
         );
         emit NewBatchMint(
             msg.sender,
@@ -299,12 +307,91 @@ contract Lotto is Ownable, Testable {
 
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
-        // TODO
+        require(
+            allLotteries_[_lottoID].endBlock < getCurrentTime(),
+            "Wait till end to claim"
+        );
+        require(
+            allLotteries_[_lottoID].lotteryStatus == Status.Completed,
+            "Winning Numbers not chosen yet"
+        );
+        require(
+            nft_.getOwnerOfTicket(_tokenID) == msg.sender,
+            "Only the owner can claim"
+        );
+        require(
+            nft_.getTicketClaimStatus(_tokenID) == false,
+            "Ticket has been claimed"
+        );
+        // Sets the claim of the ticket to true
+        nft_.claimTicket(_tokenID);
+        // Array for temp storage of chosen numbers
+        uint32[] memory chosenNumbers = new uint32[](sizeOfLottery_);
+        // Getting the chosen numbers from the NFT contract
+        chosenNumbers = nft_.getTicketNumbers(_lottoID);
+        // Getting the number of matching tickets
+        uint8 matchingNumbers = getNumberOfMatching(
+            chosenNumbers,
+            allLotteries_[_lottoID].winningNumbers
+        );
+        // Getting the prize amount for those matching tickets
+        uint256 prizeAmount = prizeForMatching(
+            matchingNumbers,
+            _lottoID
+        );
+        // Transfering the user their winnings
+        cake_.safeTransfer(address(msg.sender), prizeAmount);
     }
 
     //-------------------------------------------------------------------------
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
+
+    function getNumberOfMatching(
+        uint32[] memory _usersNumbers, 
+        uint32[] memory _winningNumbers
+    )
+        internal
+        view
+        returns(uint8)
+    {
+        uint8 noOfMatching = 0;
+
+        for (uint256 i = 0; i < _winningNumbers.length; i++) {
+            if(_usersNumbers[i] == _winningNumbers[i]) {
+                noOfMatching += 1;
+            }
+        }
+
+        return noOfMatching;
+    }
+
+    /**
+     * @param   _noOfMatching: The number of matching numbers the user has
+     * @param   _lotteryID: The ID of the lottery the user is claiming on
+     * @return  uint256: The prize amount in cake the user is entitled to 
+     */
+    function prizeForMatching(
+        uint8 _noOfMatching,
+        uint256 _lotteryID
+    ) 
+        internal  
+        returns(uint256) 
+    {
+        uint256 prize = 0;
+        // If user has no matching numbers their prize is 0
+        if(_noOfMatching == 0) {
+            return 0;
+        } 
+        // Getting the percentage of the pool the user has won
+        uint256 perOfPool = allLotteries_[_lotteryID].prizeDistribution[_noOfMatching];
+        // Timesing the percentage one by the pool
+        prize = allLotteries_[_lotteryID].prizePoolInCake*perOfPool;
+        // Removing the prize amount from the pool
+        allLotteries_[_lotteryID].prizePoolInCake -= prize;
+        // Returning the prize divided by 100 (as the prize distribution is scaled)
+        return prize/100;
+    }
 
     function discount(uint256 _lottoID, uint32 _numberOfTokens) internal returns(uint256 cost, uint256 discount) {
         cost = allLotteries_[_lottoID].costPerTicket*_numberOfTokens;

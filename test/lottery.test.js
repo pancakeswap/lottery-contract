@@ -317,15 +317,15 @@ describe("Lottery contract", function() {
         /**
          * Tests the batch buying of one hundred token
          */
-        it("Batch buying 100 tickets", async function() {
+        it("Batch buying 50 tickets", async function() {
             // Getting the price to buy
             let price = await lotteryInstance.costToBuyTickets(
                 1,
-                100
+                50
             );
             // Generating chosen numbers for buy
             let ticketNumbers = generateLottoNumbers({
-                numberOfTickets: 100, 
+                numberOfTickets: 50, 
                 lottoSize: lotto.setup.sizeOfLottery,
                 maxRange: lotto.setup.maxValidRange
             });
@@ -337,29 +337,28 @@ describe("Lottery contract", function() {
             // Batch buying tokens
             await lotteryInstance.connect(owner).batchBuyLottoTicket(
                 1,
-                100,
+                50,
                 ticketNumbers
             );
             // Testing results
-            // TODO get user balances
             assert.equal(
                 price.toString(),
-                lotto.buy.one_hundred.cost,
-                "Incorrect cost for batch buy of 100"
+                lotto.buy.fifty.cost,
+                "Incorrect cost for batch buy of 50"
             );
         }); 
         /**
          * Tests the batch buying of one thousand token
          */
-        it("Batch buying max (110) tickets", async function() {
+        it("Batch buying max (75) tickets", async function() {
             // Getting the price to buy
             let price = await lotteryInstance.costToBuyTickets(
                 1,
-                110
+                75
             );
             // Generating chosen numbers for buy
             let ticketNumbers = generateLottoNumbers({
-                numberOfTickets: 110, 
+                numberOfTickets: 75, 
                 lottoSize: lotto.setup.sizeOfLottery,
                 maxRange: lotto.setup.maxValidRange
             });
@@ -371,15 +370,15 @@ describe("Lottery contract", function() {
             // Batch buying tokens
             await lotteryInstance.connect(owner).batchBuyLottoTicket(
                 1,
-                110,
+                75,
                 ticketNumbers
             );
             // Testing results
             // TODO get user balances
             assert.equal(
                 price.toString(),
-                lotto.buy.max.cost,
-                "Incorrect cost for max batch buy of 110"
+                lotto.buy.seventy_five.cost,
+                "Incorrect cost for max batch buy of 75"
             );
         }); 
         /**
@@ -471,6 +470,131 @@ describe("Lottery contract", function() {
                     ticketNumbers
                 )
             ).to.be.revertedWith(lotto.errors.invalid_mint_timestamp);
+        });
+    });
+
+    describe("Claiming tickets tests", function() {
+        beforeEach( async () => {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+            );
+        });
+
+        it("Setting winning numbers", async function() {
+            let lotteryInfoBefore = await lotteryInstance.getBasicLottoInfo(1);
+            // Setting the time so that we can set winning numbers
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Getting the timestamp for invalid time for buying
+            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Setting the time forward 
+            await lotteryInstance.setCurrentTime(futureTime.toString());
+            // Drawing the numbers
+            await lotteryInstance.connect(owner).drawWinningNumbers(
+                1,
+                [1,2,3,4]
+            );
+            let lotteryInfoAfter = await lotteryInstance.getBasicLottoInfo(1);
+
+            assert.equal(
+                lotteryInfoBefore.winningNumbers.toString(),
+                lotto.newLotto.blankWinningNumbers,
+                "Winning numbers set before call"
+            );
+            assert.equal(
+                lotteryInfoAfter.winningNumbers.toString(),
+                lotto.newLotto.simpleWinningNumbers,
+                "Winning numbers incorrect after"
+            );
+        });
+
+        it("Invalid winning numbers (owner)", async function() {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Getting the timestamp for invalid time for buying
+            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Setting the time forward 
+            await lotteryInstance.setCurrentTime(futureTime.toString());
+            // Drawing the numbers
+            await expect(
+                lotteryInstance.connect(buyer).drawWinningNumbers(
+                    1,
+                    [1,2,3,4]
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_admin);
+        });
+
+        it("Invalid winning numbers (already chosen)", async function() {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Getting the timestamp for invalid time for buying
+            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Setting the time forward 
+            await lotteryInstance.setCurrentTime(futureTime.toString());
+            // Drawing the numbers
+            await lotteryInstance.connect(owner).drawWinningNumbers(
+                1,
+                [1,2,3,4]
+            );
+            // Drawing the numbers again
+            await expect(
+                lotteryInstance.connect(owner).drawWinningNumbers(
+                    1,
+                    [1,2,3,4]
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_draw_repeat);
+        });
+
+        it("Invalid winning numbers (time)", async function() {
+            await expect(
+                lotteryInstance.connect(owner).drawWinningNumbers(
+                    1,
+                    [1,2,3,4]
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_draw_time);
+        });
+
+        it("Claiming winning numbers (all match)", async function() {
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                50
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Approving lotto to spend cost
+            await cakeInstance.connect(owner).approve(
+                lotteryInstance.address,
+                price
+            );
+            // Batch buying tokens
+            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+            // Drawing numbers
+
         });
     });
 
