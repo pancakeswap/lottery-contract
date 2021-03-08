@@ -7,13 +7,19 @@ const lotto = {
         maxValidRange: 20
     },
     newLotto: {
-        distribution: [5, 10, 15, 20, 50],
+        distribution: [5, 10, 35, 50],
         prize: ethers.utils.parseUnits("1000", 18),
         cost: ethers.utils.parseUnits("10", 18),
         closeIncrease: 10000,
         endIncrease: 20000,
-        blankWinningNumbers: "0,0,0,0",
-        simpleWinningNumbers: "1,2,3,4"
+        win: {
+            blankWinningNumbers: "0,0,0,0",
+            simpleWinningNumbers: "1,2,3,4",
+            match_all: ethers.utils.parseUnits("500", 18),
+            match_three: ethers.utils.parseUnits("350", 18),
+            match_two: ethers.utils.parseUnits("100", 18),
+            match_one: ethers.utils.parseUnits("10", 18),
+        }
     }, 
     events: {
         new: "NewLotteryCreated",
@@ -30,19 +36,21 @@ const lotto = {
         fifty: {
             cost: "500000000000000000000"
         },
-        seventy_five: {
-            cost: "750000000000000000000"
+        sixty_two: {
+            cost: "620000000000000000000"
         }
     },
     errorData: {
-        distribution: [5, 10, 15, 20, 10],
+        distribution_length: [5, 10, 15, 20, 10],
+        distribution_total: [5, 10, 15, 20],
         prize: ethers.utils.parseUnits("0", 18),
         cost: ethers.utils.parseUnits("0", 18),
         startTime: ethers.utils.parseUnits("0", 18),
     },
     errors: {
         invalid_admin: "Ownable: caller is not the owner",
-        invalid_distribution: "Prize distribution is not 100%",
+        invalid_distribution_length: "Invalid distribution",
+        invalid_distribution_total: "Prize distribution is not 100%",
         invalid_price_or_cost: "Prize or cost cannot be 0",
         invalid_timestamp: "Timestamps for lottery invalid",
         invalid_mint_timestamp: "Invalid time for mint",

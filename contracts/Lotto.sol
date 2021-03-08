@@ -88,8 +88,6 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     // MODIFIERS
     //-------------------------------------------------------------------------
 
-
-
     //-------------------------------------------------------------------------
     // CONSTRUCTOR
     //-------------------------------------------------------------------------
@@ -204,6 +202,10 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         onlyOwner()
         returns(uint256 lottoID)
     {
+        require(
+            _prizeDistribution.length == sizeOfLottery_,
+            "Invalid distribution"
+        );
         uint256 prizeDistributionTotal = 0;
         for (uint256 j = 0; j < _prizeDistribution.length; j += 1) {
             prizeDistributionTotal += uint256(_prizeDistribution[j]);
@@ -263,7 +265,7 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         uint32[] memory _chosenNumbersForEachTicket
     )
         external
-        returns(uint256[] memory ticketIds)
+        returns(uint256[] memory)
     {
         require(
             getCurrentTime() >= allLotteries_[_lotteryID].startingBlock,
@@ -293,13 +295,14 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             "Transfer of cake failed"
         );
         // Batch mints the user their tickets
-        ticketIds = nft_.batchMint(
+        uint256[] memory ticketIds = nft_.batchMint(
             msg.sender,
             _lotteryID,
             _numberOfTickets,
             _chosenNumbersForEachTicket,
             sizeOfLottery_
         );
+        // Emitting event with all information
         emit NewBatchMint(
             msg.sender,
             ticketIds,
@@ -308,12 +311,13 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             0, // TODO
             totalCost
         );
+        return ticketIds;
     }
 
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
         require(
-            allLotteries_[_lottoID].endBlock < getCurrentTime(),
+            allLotteries_[_lottoID].endBlock <= getCurrentTime(),
             "Wait till end to claim"
         );
         require(
@@ -330,13 +334,9 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         );
         // Sets the claim of the ticket to true
         nft_.claimTicket(_tokenID);
-        // Array for temp storage of chosen numbers
-        uint32[] memory chosenNumbers = new uint32[](sizeOfLottery_);
-        // Getting the chosen numbers from the NFT contract
-        chosenNumbers = nft_.getTicketNumbers(_lottoID);
         // Getting the number of matching tickets
         uint8 matchingNumbers = getNumberOfMatching(
-            chosenNumbers,
+            nft_.getTicketNumbers(_tokenID),
             allLotteries_[_lottoID].winningNumbers
         );
         // Getting the prize amount for those matching tickets
@@ -344,6 +344,8 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             matchingNumbers,
             _lottoID
         );
+        // Removing the prize amount from the pool
+        allLotteries_[_lottoID].prizePoolInCake -= prizeAmount;
         // Transfering the user their winnings
         cake_.safeTransfer(address(msg.sender), prizeAmount);
     }
@@ -381,6 +383,7 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         uint256 _lotteryID
     ) 
         internal  
+        view
         returns(uint256) 
     {
         uint256 prize = 0;
@@ -389,11 +392,9 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             return 0;
         } 
         // Getting the percentage of the pool the user has won
-        uint256 perOfPool = allLotteries_[_lotteryID].prizeDistribution[_noOfMatching];
+        uint256 perOfPool = allLotteries_[_lotteryID].prizeDistribution[_noOfMatching-1];
         // Timesing the percentage one by the pool
         prize = allLotteries_[_lotteryID].prizePoolInCake*perOfPool;
-        // Removing the prize amount from the pool
-        allLotteries_[_lotteryID].prizePoolInCake -= prize;
         // Returning the prize divided by 100 (as the prize distribution is scaled)
         return prize/100;
     }

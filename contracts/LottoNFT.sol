@@ -20,6 +20,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     }
     // Token ID => Token information 
     mapping(uint256 => TicketInfo) internal ticketInfo_;
+    mapping(address => uint256[]) internal userTickets_;
 
     //-------------------------------------------------------------------------
     // EVENTS
@@ -113,6 +114,10 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         return ticketInfo_[_ticketID].claimed;
     }
 
+    function getUserTickets(address _user) public view returns(uint256[] memory) {
+        return userTickets_[_user];
+    }
+
     //-------------------------------------------------------------------------
     // STATE MODIFYING FUNCTIONS 
     //-------------------------------------------------------------------------
@@ -154,6 +159,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
                 numbers,
                 false
             );
+            userTickets_[_to].push(tokenIDsCount_);
         }
         // Minting the batch of tokens
         _mintBatch(
