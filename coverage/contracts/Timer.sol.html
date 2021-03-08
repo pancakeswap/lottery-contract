@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Code coverage report for contracts/ILottoNFT.sol</title>
+    <title>Code coverage report for contracts/Timer.sol</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -16,13 +16,13 @@
 <div class='wrapper'>
   <div class='pad1'>
     <h1>
-      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> ILottoNFT.sol
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> Timer.sol
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">33.33% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/0</span>
+        <span class='fraction'>1/3</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -30,18 +30,18 @@
         <span class='fraction'>0/0</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">66.67% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/0</span>
+        <span class='fraction'>2/3</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">33.33% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/0</span>
+        <span class='fraction'>1/3</span>
       </div>
     </div>
   </div>
-  <div class='status-line high'></div>
+  <div class='status-line low'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -73,23 +73,7 @@
 28
 29
 30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+31</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -99,6 +83,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">113×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -107,6 +92,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -115,72 +101,38 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">//SPDX-License-Identifier: MIT
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
 pragma solidity 0.7.3;
-pragma experimental ABIEncoderV2;
 &nbsp;
-interface ILottoNFT {
+/**
+ * @title Universal store of current contract time for testing environments.
+ */
+contract Timer {
+    uint256 private currentTime;
 &nbsp;
-    //-------------------------------------------------------------------------
-    // VIEW FUNCTIONS
-    //-------------------------------------------------------------------------
+    constructor() public {
+        currentTime = block.timestamp; 
+    }
 &nbsp;
-    function getTicketNumbers(
-        uint256 _ticketID
-    ) 
-        external 
-        view 
-        returns(uint32[] memory);
+    /**
+     * @notice Sets the current time.
+     * @dev Will revert if not running in test mode.
+     * @param time timestamp to set `currentTime` to.
+     */
+    function setCurrentTime(uint256 time) external {
+<span class="cstat-no" title="statement not covered" >        currentTime = time</span>;
+    }
 &nbsp;
-    function getOwnerOfTicket(
-        uint256 _ticketID
-    ) 
-        external 
-        view 
-        returns(address);
-&nbsp;
-    function getTicketClaimStatus(
-        uint256 _ticketID
-    ) 
-        external 
-        view
-        returns(bool);
-&nbsp;
-    //-------------------------------------------------------------------------
-    // STATE MODIFYING FUNCTIONS 
-    //-------------------------------------------------------------------------
-&nbsp;
-    function batchMint(
-        address _to,
-        uint256 _lottoID,
-        uint32 _numberOfTickets,
-        uint32[] calldata _numbers,
-        uint8 sizeOfLottery
-    )
-        external
-        returns(uint256[] memory);
-&nbsp;
-    function claimTicket(uint256 _ticketID) external returns(bool);
+    /**
+     * @notice Gets the current time. Will return the last time set in `setCurrentTime` if running in test mode.
+     * Otherwise, it will return the block timestamp.
+     * @return uint256 for the current Testable timestamp.
+     */
+<span class="fstat-no" title="function not covered" >    function getCurrentTime() public view returns (uint256) {</span>
+<span class="cstat-no" title="statement not covered" >        return currentTime;</span>
+    }
 }</pre></td></tr>
 </table></pre>
 <div class='push'></div><!-- for sticky footer -->

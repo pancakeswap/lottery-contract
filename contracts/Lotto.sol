@@ -3,6 +3,7 @@ pragma solidity 0.7.3;
 pragma experimental ABIEncoderV2;
 // Imported OZ helper contracts
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 // Inherited allowing for ownership of contract
@@ -22,6 +23,8 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     Counters.Counter private lotteryIDCounter_;
     // Safe math
     using SafeMath for uint256;
+    // Safe ERC20
+    using SafeERC20 for IERC20;
 
     // State variables 
     // Instance of Cake token (collateral currency for lotto)
@@ -32,7 +35,7 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     // Lottery size
     uint8 public sizeOfLottery_;
     // Max range for numbers (starting at 0)
-    uint8 public maxValidRange_;
+    uint32 public maxValidRange_;
 
     // Represents the status of the lottery
     enum Status { 
@@ -51,7 +54,7 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         uint256 startingBlock;      // Block timestamp for star of lotto
         uint256 closingBlock;       // Block timestamp for end of entries
         uint256 endBlock;           // Block timestamp for claiming winnings
-        uint8[] winningNumbers;     // The winning numbers
+        uint32[] winningNumbers;     // The winning numbers
     }
     // Lottery ID's to info
     mapping(uint256 => LottoInfo) internal allLotteries_;
@@ -85,8 +88,6 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     // MODIFIERS
     //-------------------------------------------------------------------------
 
-
-
     //-------------------------------------------------------------------------
     // CONSTRUCTOR
     //-------------------------------------------------------------------------
@@ -95,7 +96,7 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         address _cake, 
         address _timer,
         uint8 _sizeOfLotteryNumbers,
-        uint8 _maxValidNumberRange
+        uint32 _maxValidNumberRange
     ) 
         Testable(_timer)
     {
@@ -122,7 +123,6 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     {
         uint256 pricePer = allLotteries_[_lotteryID].costPerTicket;
         totalCost = pricePer.mul(_numberOfTickets);
-        // TODO use internal bonding curve 
     }
 
     function getBasicLottoInfo(uint256 _lotteryID) public view returns(
@@ -134,12 +134,16 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         ); 
     }
 
+    function getMaxRange() public view returns(uint32) {
+        return maxValidRange_;
+    }
+
     //-------------------------------------------------------------------------
     // STATE MODIFYING FUNCTIONS 
     //-------------------------------------------------------------------------
 
     //-------------------------------------------------------------------------
-    // Restricted Access Functions
+    // Restricted Access Functions (onlyOwner)
 
     function updateSizeOfLottery(uint8 _newSize) external onlyOwner() {
         require(
@@ -149,7 +153,7 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         sizeOfLottery_ = _newSize;
     }
 
-    function updateMaxRange(uint8 _newMaxRange) external onlyOwner() {
+    function updateMaxRange(uint32 _newMaxRange) external onlyOwner() {
         require(
             maxValidRange_ != _newMaxRange,
             "Cannot set to current size"
@@ -158,14 +162,18 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     }
 
 
-    function drawWinningNumbers(uint256 _lottoID) external onlyOwner() {
-        // Creating space for winning numbers
-        uint8[] memory winningNumbers;
-        // TODO will call ChainLink VRF
-        for (uint8 i = 0; i < sizeOfLottery_; i++) {
-            winningNumbers[i] = i;
-        }
-        allLotteries_[_lottoID].winningNumbers = winningNumbers;
+    function drawWinningNumbers(uint256 _lottoID, uint32[] memory _winningNumbers) external onlyOwner() {
+        require(
+            allLotteries_[_lottoID].lotteryStatus != Status.Completed,
+            "Winning Numbers chosen"
+        );
+        require(
+            allLotteries_[_lottoID].closingBlock <= getCurrentTime(),
+            "Cannot set winning numbers during lottery"
+        );
+        // TODO ChainLink VRF 
+        allLotteries_[_lottoID].winningNumbers = _winningNumbers;
+        allLotteries_[_lottoID].lotteryStatus = Status.Completed;
     }
 
     /**
@@ -198,6 +206,10 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         onlyOwner()
         returns(uint256 lottoID)
     {
+        require(
+            _prizeDistribution.length == sizeOfLottery_,
+            "Invalid distribution"
+        );
         uint256 prizeDistributionTotal = 0;
         for (uint256 j = 0; j < _prizeDistribution.length; j += 1) {
             prizeDistributionTotal += uint256(_prizeDistribution[j]);
@@ -219,15 +231,21 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         );
         // Incrementing lottery ID 
         lotteryIDCounter_.increment();
+        uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
         // Saving data in struct
-        allLotteries_[lotteryIDCounter_.current()].lotteryID = lotteryIDCounter_.current();
-        allLotteries_[lotteryIDCounter_.current()].lotteryStatus = Status.NotStarted;
-        allLotteries_[lotteryIDCounter_.current()].prizePoolInCake = _prizePoolInCake;
-        allLotteries_[lotteryIDCounter_.current()].costPerTicket = _costPerTicket;
-        allLotteries_[lotteryIDCounter_.current()].prizeDistribution = _prizeDistribution;
-        allLotteries_[lotteryIDCounter_.current()].startingBlock = _startingBlock;
-        allLotteries_[lotteryIDCounter_.current()].closingBlock = _closingBlock;
-        allLotteries_[lotteryIDCounter_.current()].endBlock = _endBlock;
+        LottoInfo memory newLottery = LottoInfo(
+            lotteryIDCounter_.current(),
+            Status.NotStarted,
+            _prizePoolInCake,
+            _costPerTicket,
+            _prizeDistribution,
+            _startingBlock,
+            _closingBlock,
+            _endBlock,
+            winningNumbers
+        );
+        allLotteries_[lotteryIDCounter_.current()] = newLottery;
+
         // Emitting important information around new lottery.
         emit NewLotteryCreated(
             lotteryIDCounter_.current(),
@@ -242,13 +260,16 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         );
     }
 
+    //-------------------------------------------------------------------------
+    // General Access Functions
+
     function batchBuyLottoTicket(
         uint256 _lotteryID,
         uint32 _numberOfTickets,
         uint32[] memory _chosenNumbersForEachTicket
     )
         external
-        returns(uint256[] memory ticketIds)
+        returns(uint256[] memory)
     {
         require(
             getCurrentTime() >= allLotteries_[_lotteryID].startingBlock,
@@ -278,12 +299,14 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             "Transfer of cake failed"
         );
         // Batch mints the user their tickets
-        ticketIds = nft_.batchMint(
+        uint256[] memory ticketIds = nft_.batchMint(
             msg.sender,
             _lotteryID,
             _numberOfTickets,
-            _chosenNumbersForEachTicket
+            _chosenNumbersForEachTicket,
+            sizeOfLottery_
         );
+        // Emitting event with all information
         emit NewBatchMint(
             msg.sender,
             ticketIds,
@@ -292,19 +315,149 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             0, // TODO
             totalCost
         );
+        return ticketIds;
     }
 
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
-        // TODO
+        // Checking the lottery is in a valid time for claiming
+        require(
+            allLotteries_[_lottoID].endBlock <= getCurrentTime(),
+            "Wait till end to claim"
+        );
+        // Checks the lottery winning numbers are available 
+        require(
+            allLotteries_[_lottoID].lotteryStatus == Status.Completed,
+            "Winning Numbers not chosen yet"
+        );
+        require(
+            nft_.getOwnerOfTicket(_tokenID) == msg.sender,
+            "Only the owner can claim"
+        );
+        require(
+            nft_.getTicketClaimStatus(_tokenID) == false,
+            "Ticket has been claimed"
+        );
+        // Sets the claim of the ticket to true
+        require(
+            nft_.claimTicket(_tokenID),
+            "Numbers for ticket invalid"
+        );
+        // Getting the number of matching tickets
+        uint8 matchingNumbers = getNumberOfMatching(
+            nft_.getTicketNumbers(_tokenID),
+            allLotteries_[_lottoID].winningNumbers
+        );
+        // Getting the prize amount for those matching tickets
+        uint256 prizeAmount = prizeForMatching(
+            matchingNumbers,
+            _lottoID
+        );
+        // Removing the prize amount from the pool
+        allLotteries_[_lottoID].prizePoolInCake -= prizeAmount;
+        // Transfering the user their winnings
+        cake_.safeTransfer(address(msg.sender), prizeAmount);
+    }
+
+    function batchClaimRewards(
+        uint256 _lotteryID, 
+        uint256[] calldata _tokeIDs
+    ) external {
+        // Checking the lottery is in a valid time for claiming
+        require(
+            allLotteries_[_lotteryID].endBlock <= getCurrentTime(),
+            "Wait till end to claim"
+        );
+        // Checks the lottery winning numbers are available 
+        require(
+            allLotteries_[_lotteryID].lotteryStatus == Status.Completed,
+            "Winning Numbers not chosen yet"
+        );
+        // Creates a storage for all winnings
+        uint256 totalPrize = 0;
+        // Loops through each submitted token
+        for (uint256 i = 0; i < _tokeIDs.length; i++) {
+            // Checks user is owner (will revert entire call if not)
+            require(
+                nft_.getOwnerOfTicket(_tokeIDs[i]) == msg.sender,
+                "Only the owner can claim"
+            );
+            // If token has already been claimed, skip token
+            if(
+                nft_.getTicketClaimStatus(_tokeIDs[i]) || 
+                nft_.getTicketClaimStatus(_tokeIDs[i])
+            ) {
+                continue;
+            }
+            // Claims the ticket (will only revert if numbers invalid)
+            require(
+                nft_.claimTicket(_tokeIDs[i]),
+                "Numbers for ticket invalid"
+            );
+            // Getting the number of matching tickets
+            uint8 matchingNumbers = getNumberOfMatching(
+                nft_.getTicketNumbers(_tokeIDs[i]),
+                allLotteries_[_lotteryID].winningNumbers
+            );
+            // Getting the prize amount for those matching tickets
+            uint256 prizeAmount = prizeForMatching(
+                matchingNumbers,
+                _lotteryID
+            );
+            // Removing the prize amount from the pool
+            allLotteries_[_lotteryID].prizePoolInCake -= prizeAmount;
+            totalPrize += prizeAmount;
+        }
+        // Transferring the user their winnings
+        cake_.safeTransfer(address(msg.sender), totalPrize);
     }
 
     //-------------------------------------------------------------------------
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
 
-    function discount(uint256 _lottoID, uint32 _numberOfTokens) internal returns(uint256 cost, uint256 discount) {
-        cost = allLotteries_[_lottoID].costPerTicket*_numberOfTokens;
-        discount = (_numberOfTokens*2)/1000;
+    function getNumberOfMatching(
+        uint32[] memory _usersNumbers, 
+        uint32[] memory _winningNumbers
+    )
+        internal
+        view
+        returns(uint8)
+    {
+        uint8 noOfMatching = 0;
+
+        for (uint256 i = 0; i < _winningNumbers.length; i++) {
+            if(_usersNumbers[i] == _winningNumbers[i]) {
+                noOfMatching += 1;
+            }
+        }
+
+        return noOfMatching;
+    }
+
+    /**
+     * @param   _noOfMatching: The number of matching numbers the user has
+     * @param   _lotteryID: The ID of the lottery the user is claiming on
+     * @return  uint256: The prize amount in cake the user is entitled to 
+     */
+    function prizeForMatching(
+        uint8 _noOfMatching,
+        uint256 _lotteryID
+    ) 
+        internal  
+        view
+        returns(uint256) 
+    {
+        uint256 prize = 0;
+        // If user has no matching numbers their prize is 0
+        if(_noOfMatching == 0) {
+            return 0;
+        } 
+        // Getting the percentage of the pool the user has won
+        uint256 perOfPool = allLotteries_[_lotteryID].prizeDistribution[_noOfMatching-1];
+        // Timesing the percentage one by the pool
+        prize = allLotteries_[_lotteryID].prizePoolInCake*perOfPool;
+        // Returning the prize divided by 100 (as the prize distribution is scaled)
+        return prize/100;
     }
 }

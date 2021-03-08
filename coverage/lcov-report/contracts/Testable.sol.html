@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Code coverage report for contracts/ILottoNFT.sol</title>
+    <title>Code coverage report for contracts/Testable.sol</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -16,28 +16,28 @@
 <div class='wrapper'>
   <div class='pad1'>
     <h1>
-      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> ILottoNFT.sol
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> Testable.sol
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">83.33% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/0</span>
+        <span class='fraction'>5/6</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">50% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>0/0</span>
+        <span class='fraction'>2/4</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>0/0</span>
+        <span class='fraction'>4/4</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">85.71% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/0</span>
+        <span class='fraction'>6/7</span>
       </div>
     </div>
   </div>
@@ -89,7 +89,12 @@
 44
 45
 46
-47</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+47
+48
+49
+50
+51
+52</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -108,6 +113,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">105×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25×</span>
+<span class="cline-any cline-yes">25×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -116,6 +130,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -124,63 +139,63 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">113×</span>
+<span class="cline-any cline-yes">113×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">//SPDX-License-Identifier: MIT
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
 pragma solidity 0.7.3;
-pragma experimental ABIEncoderV2;
 &nbsp;
-interface ILottoNFT {
+import "./Timer.sol";
 &nbsp;
-    //-------------------------------------------------------------------------
-    // VIEW FUNCTIONS
-    //-------------------------------------------------------------------------
+/**
+ * @title Base class that provides time overrides, but only if being run in test mode.
+ */
+abstract contract Testable {
+    // If the contract is being run on the test network, then `timerAddress` will be the 0x0 address.
+    // Note: this variable should be set on construction and never modified.
+    address public timerAddress;
 &nbsp;
-    function getTicketNumbers(
-        uint256 _ticketID
-    ) 
-        external 
-        view 
-        returns(uint32[] memory);
+    /**
+     * @notice Constructs the Testable contract. Called by child contracts.
+     * @param _timerAddress Contract that stores the current time in a testing environment.
+     * Must be set to 0x0 for production environments that use live time.
+     */
+    constructor(address _timerAddress) internal {
+        timerAddress = _timerAddress;
+    }
 &nbsp;
-    function getOwnerOfTicket(
-        uint256 _ticketID
-    ) 
-        external 
-        view 
-        returns(address);
+    /**
+     * @notice Reverts if not running in test mode.
+     */
+    modifier onlyIfTest {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(timerAddress != address(0x0));
+        _;
+    }
 &nbsp;
-    function getTicketClaimStatus(
-        uint256 _ticketID
-    ) 
-        external 
-        view
-        returns(bool);
+    /**
+     * @notice Sets the current time.
+     * @dev Will revert if not running in test mode.
+     * @param time timestamp to set current Testable time to.
+     */
+    function setCurrentTime(uint256 time) external onlyIfTest {
+        Timer(timerAddress).setCurrentTime(time);
+    }
 &nbsp;
-    //-------------------------------------------------------------------------
-    // STATE MODIFYING FUNCTIONS 
-    //-------------------------------------------------------------------------
-&nbsp;
-    function batchMint(
-        address _to,
-        uint256 _lottoID,
-        uint32 _numberOfTickets,
-        uint32[] calldata _numbers,
-        uint8 sizeOfLottery
-    )
-        external
-        returns(uint256[] memory);
-&nbsp;
-    function claimTicket(uint256 _ticketID) external returns(bool);
+    /**
+     * @notice Gets the current time. Will return the last time set in `setCurrentTime` if running in test mode.
+     * Otherwise, it will return the block timestamp.
+     * @return uint for the current Testable timestamp.
+     */
+    function getCurrentTime() public view returns (uint256) {
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (timerAddress != address(0x0)) {
+            return Timer(timerAddress).getCurrentTime();
+        } else {
+<span class="cstat-no" title="statement not covered" >            return block.timestamp;</span>
+        }
+    }
 }</pre></td></tr>
 </table></pre>
 <div class='push'></div><!-- for sticky footer -->

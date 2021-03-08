@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Code coverage report for contracts/Mock_erc20.sol</title>
+    <title>Code coverage report for contracts/ILottery.sol</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -16,13 +16,13 @@
 <div class='wrapper'>
   <div class='pad1'>
     <h1>
-      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> Mock_erc20.sol
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> ILottery.sol
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>0/2</span>
+        <span class='fraction'>0/0</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -30,18 +30,18 @@
         <span class='fraction'>0/0</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">50% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>1/2</span>
+        <span class='fraction'>0/0</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>0/2</span>
+        <span class='fraction'>0/0</span>
       </div>
     </div>
   </div>
-  <div class='status-line low'></div>
+  <div class='status-line high'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet">1
 2
@@ -56,32 +56,38 @@
 11
 12
 13
-14</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+14
+15
+16</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">//SPDX-License-Identifier: MIT
 pragma solidity 0.7.3;
 &nbsp;
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+interface ILottery {
 &nbsp;
-contract Mock_erc20 is ERC20 {
-    constructor(uint256 _supply) ERC20("Cake", "$C") {
-<span class="cstat-no" title="statement not covered" >        _mint(msg.sender, _supply)</span>;
-    }
+    //-------------------------------------------------------------------------
+    // VIEW FUNCTIONS
+    //-------------------------------------------------------------------------
 &nbsp;
-<span class="fstat-no" title="function not covered" >    function mint(address _to, uint256 _amount) public {</span>
-<span class="cstat-no" title="statement not covered" >        _mint(_to, _amount)</span>;
-    }
+    function getMaxRange() external view returns(uint32);
+&nbsp;
+    //-------------------------------------------------------------------------
+    // STATE MODIFYING FUNCTIONS 
+    //-------------------------------------------------------------------------
+&nbsp;
 }</pre></td></tr>
 </table></pre>
 <div class='push'></div><!-- for sticky footer -->

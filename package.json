@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
-    "clean": "rm -rf artifacts && rm -rf cache",
+    "clean": "rm -rf artifacts && rm -rf cache && rm -rf coverage && rm -rf coverage.json",
     "cover": "npx hardhat coverage"
   },
   "dependencies": {
