@@ -122,7 +122,6 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     {
         uint256 pricePer = allLotteries_[_lotteryID].costPerTicket;
         totalCost = pricePer.mul(_numberOfTickets);
-        // TODO use internal bonding curve 
     }
 
     function getBasicLottoInfo(uint256 _lotteryID) public view returns(
@@ -139,7 +138,7 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     //-------------------------------------------------------------------------
 
     //-------------------------------------------------------------------------
-    // Restricted Access Functions
+    // Restricted Access Functions (onlyOwner)
 
     function updateSizeOfLottery(uint8 _newSize) external onlyOwner() {
         require(
@@ -219,15 +218,21 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         );
         // Incrementing lottery ID 
         lotteryIDCounter_.increment();
+        uint8[] memory winningNumbers = new uint8[](sizeOfLottery_);
         // Saving data in struct
-        allLotteries_[lotteryIDCounter_.current()].lotteryID = lotteryIDCounter_.current();
-        allLotteries_[lotteryIDCounter_.current()].lotteryStatus = Status.NotStarted;
-        allLotteries_[lotteryIDCounter_.current()].prizePoolInCake = _prizePoolInCake;
-        allLotteries_[lotteryIDCounter_.current()].costPerTicket = _costPerTicket;
-        allLotteries_[lotteryIDCounter_.current()].prizeDistribution = _prizeDistribution;
-        allLotteries_[lotteryIDCounter_.current()].startingBlock = _startingBlock;
-        allLotteries_[lotteryIDCounter_.current()].closingBlock = _closingBlock;
-        allLotteries_[lotteryIDCounter_.current()].endBlock = _endBlock;
+        LottoInfo memory newLottery = LottoInfo(
+            lotteryIDCounter_.current(),
+            Status.NotStarted,
+            _prizePoolInCake,
+            _costPerTicket,
+            _prizeDistribution,
+            _startingBlock,
+            _closingBlock,
+            _endBlock,
+            winningNumbers
+        );
+        allLotteries_[lotteryIDCounter_.current()] = newLottery;
+
         // Emitting important information around new lottery.
         emit NewLotteryCreated(
             lotteryIDCounter_.current(),
@@ -241,6 +246,9 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             msg.sender
         );
     }
+
+    //-------------------------------------------------------------------------
+    // General Access Functions
 
     function batchBuyLottoTicket(
         uint256 _lotteryID,

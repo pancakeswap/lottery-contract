@@ -257,8 +257,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1615133863423,
-      "contentHash": "0fac7acd1f1e32323c6c3eb1e4b54f39",
+      "lastModificationDate": 1615136559190,
+      "contentHash": "fe671845e643e9d202f9e6932b2b16bd",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
         "version": "0.7.3",
