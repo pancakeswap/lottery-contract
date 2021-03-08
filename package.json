@@ -5,19 +5,21 @@
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
-    "clean": "rm -rf artifacts && rm -rf cache"
+    "clean": "rm -rf artifacts && rm -rf cache && rm -rf coverage && rm -rf coverage.json",
+    "cover": "npx hardhat coverage"
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.1",
     "@nomiclabs/hardhat-waffle": "2.0.1",
     "@openzeppelin/contracts": "3.4.0",
     "@pancakeswap/pancake-swap-lib": "0.0.4",
-    "bignumber.js": "^9.0.1",
+    "bignumber.js": "9.0.1",
     "chai": "4.3.0",
     "ethereum-waffle": "3.2.2",
     "ethers": "5.0.31",
     "hardhat": "2.0.11",
-    "hardhat-gas-reporter": "^1.0.4"
+    "hardhat-gas-reporter": "1.0.4",
+    "solidity-coverage": "0.7.16"
   },
   "devDependencies": {}
 }
