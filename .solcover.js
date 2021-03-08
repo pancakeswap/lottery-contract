@@ -6,7 +6,8 @@ module.exports = {
         'old_contracts/LotteryRewardProxy.sol',
         'old_contracts/LotteryUpgradableProxy.sol',
         'old_contracts/Migrations.sol',
-        'old_contracts/MockBEP20.sol'
+        'old_contracts/MockBEP20.sol',
+        'Mock_erc20.sol'
     ],
     silent: true
 };

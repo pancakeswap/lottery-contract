@@ -257,8 +257,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1615199286554,
-      "contentHash": "5f2a6a61425cda13ded8e5000e3a260a",
+      "lastModificationDate": 1615219505111,
+      "contentHash": "93db80a944fb4a00283f35319a666908",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -615,8 +615,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LottoNFT.sol": {
-      "lastModificationDate": 1615196778098,
-      "contentHash": "78bdcb5a8c35866a8d72ea53d55dea98",
+      "lastModificationDate": 1615218759857,
+      "contentHash": "d7c5e414c8dd44becf6d0db290dd05d5",
       "sourceName": "contracts/LottoNFT.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -644,6 +644,7 @@
         "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/utils/Counters.sol",
+        "./ILottery.sol",
         "./Testable.sol"
       ],
       "versionPragmas": [
@@ -1409,6 +1410,40 @@
       "imports": [],
       "versionPragmas": [],
       "artifacts": []
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/ILottery.sol": {
+      "lastModificationDate": 1615216710374,
+      "contentHash": "5ec02d1a9ea6f5d86fd526d86e65d0e0",
+      "sourceName": "contracts/ILottery.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.7.3"
+      ],
+      "artifacts": [
+        "ILottery"
+      ]
     }
   }
 }
