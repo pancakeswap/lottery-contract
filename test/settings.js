@@ -6,6 +6,10 @@ const lotto = {
         sizeOfLottery: 4,
         maxValidRange: 20
     },
+    update: {
+        sizeOfLottery: 5,
+        maxValidRange: 100
+    },
     newLotto: {
         distribution: [5, 10, 35, 50],
         prize: ethers.utils.parseUnits("1000", 18),
@@ -18,7 +22,7 @@ const lotto = {
             match_all: ethers.utils.parseUnits("500", 18),
             match_three: ethers.utils.parseUnits("350", 18),
             match_two: ethers.utils.parseUnits("100", 18),
-            match_one: ethers.utils.parseUnits("10", 18),
+            match_one: ethers.utils.parseUnits("50", 18),
         }
     }, 
     events: {
@@ -46,6 +50,7 @@ const lotto = {
         prize: ethers.utils.parseUnits("0", 18),
         cost: ethers.utils.parseUnits("0", 18),
         startTime: ethers.utils.parseUnits("0", 18),
+        ticketNumbers: [22, 15, 35, 40]
     },
     errors: {
         invalid_admin: "Ownable: caller is not the owner",
@@ -57,7 +62,13 @@ const lotto = {
         invalid_mint_numbers: "Invalid chosen numbers",
         invalid_mint_approve: "ERC20: transfer amount exceeds allowance",
         invalid_draw_time: "Cannot set winning numbers during lottery",
-        invalid_draw_repeat: "Winning Numbers chosen"
+        invalid_draw_repeat: "Winning Numbers chosen",
+        invalid_claim_time: "Wait till end to claim",
+        invalid_claim_draw: "Winning Numbers not chosen yet",
+        invalid_claim_owner: "Only the owner can claim",
+        invalid_claim_duplicate: "Ticket has been claimed",
+        invalid_size_update_duplicate: "Cannot set to current size",
+        invalid_numbers_range: "Numbers for ticket invalid"
     }
 }
 const lottoNFT = {
@@ -70,7 +81,7 @@ function generateLottoNumbers({
     numberOfTickets,
     lottoSize,
     maxRange
-}){
+}) {
     var numberOfNumbers = [];
     let counterForNumbers = 0;
     for (let i = 0; i < numberOfTickets; i++) {

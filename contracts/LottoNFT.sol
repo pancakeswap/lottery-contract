@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./ILottery.sol";
 import "./Testable.sol";
 
 contract LottoNFT is ERC1155, Ownable, Testable {
@@ -179,6 +180,13 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     }
 
     function claimTicket(uint256 _ticketID) public onlyLotto() returns(bool) {
+        uint256 maxRange = ILottery(lottoContract_).getMaxRange();
+        for (uint256 i = 0; i < ticketInfo_[_ticketID].numbers.length; i++) {
+            if(ticketInfo_[_ticketID].numbers[i] > maxRange) {
+                return false;
+            }
+        }
+
         ticketInfo_[_ticketID].claimed = true;
         return true;
     }

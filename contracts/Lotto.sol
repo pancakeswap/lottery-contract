@@ -30,7 +30,7 @@ contract Lotto is Ownable, Testable {
     // Lottery size
     uint8 public sizeOfLottery_;
     // Max range for numbers (starting at 0)
-    uint8 public maxValidRange_;
+    uint32 public maxValidRange_;
 
     // Represents the status of the lottery
     enum Status { 
@@ -91,7 +91,7 @@ contract Lotto is Ownable, Testable {
         address _cake, 
         address _timer,
         uint8 _sizeOfLotteryNumbers,
-        uint8 _maxValidNumberRange
+        uint32 _maxValidNumberRange
     ) 
         Testable(_timer)
     {
@@ -129,6 +129,10 @@ contract Lotto is Ownable, Testable {
         ); 
     }
 
+    function getMaxRange() public view returns(uint32) {
+        return maxValidRange_;
+    }
+
     //-------------------------------------------------------------------------
     // STATE MODIFYING FUNCTIONS 
     //-------------------------------------------------------------------------
@@ -144,7 +148,7 @@ contract Lotto is Ownable, Testable {
         sizeOfLottery_ = _newSize;
     }
 
-    function updateMaxRange(uint8 _newMaxRange) external onlyOwner() {
+    function updateMaxRange(uint32 _newMaxRange) external onlyOwner() {
         require(
             maxValidRange_ != _newMaxRange,
             "Cannot set to current size"
@@ -311,10 +315,12 @@ contract Lotto is Ownable, Testable {
 
 
     function claimReward(uint256 _lottoID, uint256 _tokenID) external {
+        // Checking the lottery is in a valid time for claiming
         require(
             allLotteries_[_lottoID].endBlock <= getCurrentTime(),
             "Wait till end to claim"
         );
+        // Checks the lottery winning numbers are available 
         require(
             allLotteries_[_lottoID].lotteryStatus == Status.Completed,
             "Winning Numbers not chosen yet"
@@ -328,7 +334,10 @@ contract Lotto is Ownable, Testable {
             "Ticket has been claimed"
         );
         // Sets the claim of the ticket to true
-        nft_.claimTicket(_tokenID);
+        require(
+            nft_.claimTicket(_tokenID),
+            "Numbers for ticket invalid"
+        );
         // Getting the number of matching tickets
         uint8 matchingNumbers = getNumberOfMatching(
             nft_.getTicketNumbers(_tokenID),
@@ -343,6 +352,59 @@ contract Lotto is Ownable, Testable {
         allLotteries_[_lottoID].prizePoolInCake -= prizeAmount;
         // Transfering the user their winnings
         cake_.safeTransfer(address(msg.sender), prizeAmount);
+    }
+
+    function batchClaimRewards(
+        uint256 _lotteryID, 
+        uint256[] calldata _tokeIDs
+    ) external {
+        // Checking the lottery is in a valid time for claiming
+        require(
+            allLotteries_[_lotteryID].endBlock <= getCurrentTime(),
+            "Wait till end to claim"
+        );
+        // Checks the lottery winning numbers are available 
+        require(
+            allLotteries_[_lotteryID].lotteryStatus == Status.Completed,
+            "Winning Numbers not chosen yet"
+        );
+        // Creates a storage for all winnings
+        uint256 totalPrize = 0;
+        // Loops through each submitted token
+        for (uint256 i = 0; i < _tokeIDs.length; i++) {
+            // Checks user is owner (will revert entire call if not)
+            require(
+                nft_.getOwnerOfTicket(_tokeIDs[i]) == msg.sender,
+                "Only the owner can claim"
+            );
+            // If token has already been claimed, skip token
+            if(
+                nft_.getTicketClaimStatus(_tokeIDs[i]) || 
+                nft_.getTicketClaimStatus(_tokeIDs[i])
+            ) {
+                continue;
+            }
+            // Claims the ticket (will only revert if numbers invalid)
+            require(
+                nft_.claimTicket(_tokeIDs[i]),
+                "Numbers for ticket invalid"
+            );
+            // Getting the number of matching tickets
+            uint8 matchingNumbers = getNumberOfMatching(
+                nft_.getTicketNumbers(_tokeIDs[i]),
+                allLotteries_[_lotteryID].winningNumbers
+            );
+            // Getting the prize amount for those matching tickets
+            uint256 prizeAmount = prizeForMatching(
+                matchingNumbers,
+                _lotteryID
+            );
+            // Removing the prize amount from the pool
+            allLotteries_[_lotteryID].prizePoolInCake -= prizeAmount;
+            totalPrize += prizeAmount;
+        }
+        // Transferring the user their winnings
+        cake_.safeTransfer(address(msg.sender), totalPrize);
     }
 
     //-------------------------------------------------------------------------
@@ -392,10 +454,5 @@ contract Lotto is Ownable, Testable {
         prize = allLotteries_[_lotteryID].prizePoolInCake*perOfPool;
         // Returning the prize divided by 100 (as the prize distribution is scaled)
         return prize/100;
-    }
-
-    function discount(uint256 _lottoID, uint32 _numberOfTokens) internal returns(uint256 cost, uint256 discount) {
-        cost = allLotteries_[_lottoID].costPerTicket*_numberOfTokens;
-        discount = (_numberOfTokens*2)/1000;
     }
 }
