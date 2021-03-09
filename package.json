@@ -9,7 +9,7 @@
     "cover": "npx hardhat coverage"
   },
   "dependencies": {
-    "@chainlink/contracts": "^0.1.6",
+    "@chainlink/contracts": "0.1.6",
     "@nomiclabs/hardhat-ethers": "2.0.1",
     "@nomiclabs/hardhat-waffle": "2.0.1",
     "@openzeppelin/contracts": "3.4.0",
