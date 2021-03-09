@@ -42,7 +42,8 @@ describe("Lottery contract", function() {
             cakeInstance.address,
             timerInstance.address,
             lotto.setup.sizeOfLottery,
-            lotto.setup.maxValidRange
+            lotto.setup.maxValidRange,
+            owner.address
         );
         lotteryNftInstance = await lotteryNftContract.deploy(
             lottoNFT.newLottoNft.uri,
@@ -1311,6 +1312,72 @@ describe("Lottery contract", function() {
                 timeStamp.plus(lotto.newLotto.endIncrease).toString(),
                 "Invalid starting time"
             );
+        });
+    });
+
+    describe("Split tests", function() {
+        beforeEach( async () => {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+            );
+            // Buying tickets
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(owner).transfer(
+                buyer.address,
+                price
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                price
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+            // Setting current time so that drawing is correct
+            // Getting the current block timestamp
+            currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            timeStamp = new BigNumber(currentTime.toString());
+            // Getting the timestamp for invalid time for buying
+            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Setting the time forward 
+            await lotteryInstance.setCurrentTime(futureTime.toString());
+        });
+
+        it.only("Get split", async function() {
+            // let random = BigNumber(lotto.draw.random);
+            let random = BigNumber(
+                lotto.draw.random.toString()
+            );
+            let split = await lotteryInstance.splitLessTen(
+                lotto.draw.random
+            );
+            console.log(split)
         });
     });
 });

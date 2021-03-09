@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >0.6.0;
+pragma solidity 0.6.12;
 
 import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
+import "./ILottery.sol";
 
 contract RandomNumberGenerator is VRFConsumerBase {
     
@@ -58,6 +59,11 @@ contract RandomNumberGenerator is VRFConsumerBase {
      * Callback function used by VRF Coordinator
      */
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
+        ILottery(requester).numbersDrawn(
+            currentLotteryId,
+            requestId,
+            randomness
+        );
         randomResult = randomness;
     }
 }
