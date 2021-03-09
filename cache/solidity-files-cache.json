@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1615284486130,
-      "contentHash": "9fb36714fab3d7093d826bc638c841ec",
+      "lastModificationDate": 1615295393577,
+      "contentHash": "febcb65fbb9626b523f33d6edbe7c295",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -478,8 +478,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LottoNFT.sol": {
-      "lastModificationDate": 1615218759857,
-      "contentHash": "d7c5e414c8dd44becf6d0db290dd05d5",
+      "lastModificationDate": 1615295344764,
+      "contentHash": "d98a8c7cb0ecc12687f6485928639038",
       "sourceName": "contracts/LottoNFT.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -507,6 +507,7 @@
         "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/utils/Counters.sol",
+        "@openzeppelin/contracts/math/SafeMath.sol",
         "./ILottery.sol",
         "./Testable.sol"
       ],
@@ -1632,6 +1633,36 @@
       "lastModificationDate": 1615188027896,
       "contentHash": "778c1fa0b002dea0f108654b266dd36e",
       "sourceName": "contracts/old_contracts/MockBEP20.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [],
+      "artifacts": []
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Mock_rand_gen.sol": {
+      "lastModificationDate": 1615286995857,
+      "contentHash": "fcfd9c3310cb3f317c3c8dda93326dcb",
+      "sourceName": "contracts/Mock_rand_gen.sol",
       "solcConfig": {
         "version": "0.7.3",
         "settings": {

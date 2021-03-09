@@ -20,11 +20,13 @@ import "./Strings.sol";
 // TODO rename to Lottery when done
 contract Lotto is Ownable, Testable {
     // Libraries 
-    // Counter for lottery IDs
+    // Counter for lottery IDs 
     using Counters for Counters.Counter;
     Counters.Counter private lotteryIDCounter_;
     // Safe math
     using SafeMath for uint256;
+    using SafeMath for uint32;
+    using SafeMath for uint8;
     // Safe ERC20
     using SafeERC20 for IERC20;
 
@@ -58,9 +60,9 @@ contract Lotto is Ownable, Testable {
         uint256 prizePoolInCake;    // The amount of cake for prize money
         uint256 costPerTicket;      // Cost per ticket in $cake
         uint8[] prizeDistribution;  // The distribution for prize money
-        uint256 startingBlock;      // Block timestamp for star of lotto
-        uint256 closingBlock;       // Block timestamp for end of entries
-        uint256 endBlock;           // Block timestamp for claiming winnings
+        uint256 startingTimestamp;      // Block timestamp for star of lotto
+        uint256 closingTimestamp;       // Block timestamp for end of entries
+        uint256 endTimestamp;           // Block timestamp for claiming winnings
         uint32[] winningNumbers;     // The winning numbers
     }
     // Lottery ID's to info
@@ -71,14 +73,14 @@ contract Lotto is Ownable, Testable {
     //-------------------------------------------------------------------------
 
     event NewLotteryCreated(
-        uint256 indexed lottoID,
+        uint256 indexed lotteryId,
         Status lotteryStatus,
         uint8[] prizeDistribution,
         uint256 prizePoolInCake,
         uint256 costPerTicket,
-        uint256 startingBlock,
-        uint256 closingBlock,
-        uint256 endBlock,
+        uint256 startingTimestamp,
+        uint256 closingTimestamp,
+        uint256 endTimestamp,
         address indexed creator
     );
 
@@ -191,7 +193,7 @@ contract Lotto is Ownable, Testable {
     {
         // Checks that the lottery is past the closing block
         require(
-            allLotteries_[_lotteryId].closingBlock <= getCurrentTime(),
+            allLotteries_[_lotteryId].closingTimestamp <= getCurrentTime(),
             "Cannot set winning numbers during lottery"
         );
         // Checks lottery numbers have not already been drawn
@@ -232,12 +234,12 @@ contract Lotto is Ownable, Testable {
      *          right you get 5% of the pool, 2 matching would be 10% and so on.
      * @param   _prizePoolInCake The amount of Cake available to win in this 
      *          lottery.
-     * @param   _startingBlock The block timestamp for the beginning of the 
+     * @param   _startingTimestamp The block timestamp for the beginning of the 
      *          lottery. 
-     * @param   _closingBlock The block timestamp after which no more tickets
+     * @param   _closingTimestamp The block timestamp after which no more tickets
      *          will be sold for the lottery. Note that this timestamp MUST
      *          be after the starting block timestamp. 
-     * @param   _endBlock The block timestamp for the end of the lottery. After
+     * @param   _endTimestamp The block timestamp for the end of the lottery. After
      *          this time users can withdraw any winnings. Note that between
      *          the closing block and this end block the winning numbers must
      *          be added by the admin. If they are not this end block timestamp
@@ -247,13 +249,13 @@ contract Lotto is Ownable, Testable {
         uint8[] calldata _prizeDistribution,
         uint256 _prizePoolInCake,
         uint256 _costPerTicket,
-        uint256 _startingBlock,
-        uint256 _closingBlock,
-        uint256 _endBlock
+        uint256 _startingTimestamp,
+        uint256 _closingTimestamp,
+        uint256 _endTimestamp
     )
         external
         onlyOwner()
-        returns(uint256 lottoID)
+        returns(uint256 lotteryId)
     {
         require(
             _prizeDistribution.length == sizeOfLottery_,
@@ -261,7 +263,9 @@ contract Lotto is Ownable, Testable {
         );
         uint256 prizeDistributionTotal = 0;
         for (uint256 j = 0; j < _prizeDistribution.length; j += 1) {
-            prizeDistributionTotal += uint256(_prizeDistribution[j]);
+            prizeDistributionTotal = prizeDistributionTotal.add(
+                uint256(_prizeDistribution[j])
+            );
         }
         // Ensuring that prize distribution total is 100%
         require(
@@ -273,50 +277,47 @@ contract Lotto is Ownable, Testable {
             "Prize or cost cannot be 0"
         );
         require(
-            _startingBlock != 0 &&
-            _startingBlock < _closingBlock &&
-            _closingBlock < _endBlock,
+            _startingTimestamp != 0 &&
+            _startingTimestamp < _closingTimestamp &&
+            _closingTimestamp < _endTimestamp,
             "Timestamps for lottery invalid"
         );
         // Incrementing lottery ID 
         lotteryIDCounter_.increment();
-        lottoID = lotteryIDCounter_.current();
+        lotteryId = lotteryIDCounter_.current();
         uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
         // Saving data in struct
         LottoInfo memory newLottery = LottoInfo(
-            lottoID,
+            lotteryId,
             Status.NotStarted,
             _prizePoolInCake,
             _costPerTicket,
             _prizeDistribution,
-            _startingBlock,
-            _closingBlock,
-            _endBlock,
+            _startingTimestamp,
+            _closingTimestamp,
+            _endTimestamp,
             winningNumbers
         );
-        allLotteries_[lottoID] = newLottery;
+        allLotteries_[lotteryId] = newLottery;
 
         // Emitting important information around new lottery.
         emit NewLotteryCreated(
-            lottoID,
+            lotteryId,
             Status.NotStarted,
             _prizeDistribution,
             _prizePoolInCake,
             _costPerTicket,
-            _startingBlock,
-            _closingBlock,
-            _endBlock,
+            _startingTimestamp,
+            _closingTimestamp,
+            _endTimestamp,
             msg.sender
         );
     }
 
     function withdrawCake() external onlyOwner() {
-        require(
-            cake_.transfer(
-                msg.sender, 
-                cake_.balanceOf(address(this))
-            ), 
-            "Unable to transfer"
+        cake_.transfer(
+            msg.sender, 
+            cake_.balanceOf(address(this))
         );
     }
 
@@ -332,11 +333,11 @@ contract Lotto is Ownable, Testable {
         returns(uint256[] memory)
     {
         require(
-            getCurrentTime() >= allLotteries_[_lotteryID].startingBlock,
+            getCurrentTime() >= allLotteries_[_lotteryID].startingTimestamp,
             "Invalid time for mint:start"
         );
         require(
-            getCurrentTime() < allLotteries_[_lotteryID].closingBlock,
+            getCurrentTime() < allLotteries_[_lotteryID].closingTimestamp,
             "Invalid time for mint:end"
         );
         uint256 numberCheck = _numberOfTickets*sizeOfLottery_;
@@ -350,13 +351,10 @@ contract Lotto is Ownable, Testable {
         // Gets the total cost for the buy
         uint256 totalCost = costPerTicket*_numberOfTickets;
         // Transfers the required cake to this contract
-        require(
-            cake_.transferFrom(
-                msg.sender, 
-                address(this), 
-                totalCost
-            ),
-            "Transfer of cake failed"
+        cake_.transferFrom(
+            msg.sender, 
+            address(this), 
+            totalCost
         );
         // Batch mints the user their tickets
         uint256[] memory ticketIds = nft_.batchMint(
@@ -379,42 +377,42 @@ contract Lotto is Ownable, Testable {
     }
 
 
-    function claimReward(uint256 _lottoID, uint256 _tokenID) external {
+    function claimReward(uint256 _lotteryId, uint256 _tokenId) external {
         // Checking the lottery is in a valid time for claiming
         require(
-            allLotteries_[_lottoID].endBlock <= getCurrentTime(),
+            allLotteries_[_lotteryId].endTimestamp <= getCurrentTime(),
             "Wait till end to claim"
         );
         // Checks the lottery winning numbers are available 
         require(
-            allLotteries_[_lottoID].lotteryStatus == Status.Completed,
+            allLotteries_[_lotteryId].lotteryStatus == Status.Completed,
             "Winning Numbers not chosen yet"
         );
         require(
-            nft_.getOwnerOfTicket(_tokenID) == msg.sender,
+            nft_.getOwnerOfTicket(_tokenId) == msg.sender,
             "Only the owner can claim"
         );
         require(
-            nft_.getTicketClaimStatus(_tokenID) == false,
+            nft_.getTicketClaimStatus(_tokenId) == false,
             "Ticket has been claimed"
         );
         // Sets the claim of the ticket to true
         require(
-            nft_.claimTicket(_tokenID),
+            nft_.claimTicket(_tokenId),
             "Numbers for ticket invalid"
         );
         // Getting the number of matching tickets
         uint8 matchingNumbers = getNumberOfMatching(
-            nft_.getTicketNumbers(_tokenID),
-            allLotteries_[_lottoID].winningNumbers
+            nft_.getTicketNumbers(_tokenId),
+            allLotteries_[_lotteryId].winningNumbers
         );
         // Getting the prize amount for those matching tickets
         uint256 prizeAmount = prizeForMatching(
             matchingNumbers,
-            _lottoID
+            _lotteryId
         );
         // Removing the prize amount from the pool
-        allLotteries_[_lottoID].prizePoolInCake -= prizeAmount;
+        allLotteries_[_lotteryId].prizePoolInCake = allLotteries_[_lotteryId].prizePoolInCake.sub(prizeAmount);
         // Transfering the user their winnings
         cake_.safeTransfer(address(msg.sender), prizeAmount);
     }
@@ -425,7 +423,7 @@ contract Lotto is Ownable, Testable {
     ) external {
         // Checking the lottery is in a valid time for claiming
         require(
-            allLotteries_[_lotteryID].endBlock <= getCurrentTime(),
+            allLotteries_[_lotteryID].endTimestamp <= getCurrentTime(),
             "Wait till end to claim"
         );
         // Checks the lottery winning numbers are available 
@@ -464,8 +462,8 @@ contract Lotto is Ownable, Testable {
                 _lotteryID
             );
             // Removing the prize amount from the pool
-            allLotteries_[_lotteryID].prizePoolInCake -= prizeAmount;
-            totalPrize += prizeAmount;
+            allLotteries_[_lotteryID].prizePoolInCake = allLotteries_[_lotteryID].prizePoolInCake.sub(prizeAmount);
+            totalPrize = totalPrize.add(prizeAmount);
         }
         // Transferring the user their winnings
         cake_.safeTransfer(address(msg.sender), totalPrize);

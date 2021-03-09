@@ -5,12 +5,19 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./ILottery.sol";
 import "./Testable.sol";
 
 contract LottoNFT is ERC1155, Ownable, Testable {
+    // Libraries 
+    // Safe math
+    using SafeMath for uint256;
+    using SafeMath for uint32;
+    using SafeMath for uint8;
+
     // Counter for token IDs
-    uint256 internal tokenIDsCount_ = 0;
+    uint256 internal tokenIdsCount_ = 0;
     // State variables 
     address internal lottoContract_;
     // Storage for ticket information
@@ -30,7 +37,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     event InfoBatchMint(
         address indexed receiving, 
         uint256 amountOfTokens, 
-        uint256[] tokenIDs
+        uint256[] tokenIds
     );
 
     //-------------------------------------------------------------------------
@@ -143,11 +150,11 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         // Storage for the amount of tokens to mint (always 1)
         uint256[] memory amounts = new uint256[](_numberOfTickets);
         // Storage for the token IDs
-        uint256[] memory tokenIDs = new uint256[](_numberOfTickets);
+        uint256[] memory tokenIds = new uint256[](_numberOfTickets);
         for (uint32 i = 0; i < _numberOfTickets; i += 1) {
-            // Incrementing the tokenID counter
-            tokenIDsCount_ += 1;
-            tokenIDs[i] = tokenIDsCount_;
+            // Incrementing the tokenId counter
+            tokenIdsCount_ += 1;
+            tokenIds[i] = tokenIdsCount_;
             amounts[i] = 1;
             // Getting the start and end position of numbers for this ticket
             uint32 start = i*sizeOfLottery;
@@ -155,17 +162,17 @@ contract LottoNFT is ERC1155, Ownable, Testable {
             // Splitting out the chosen numbers
             uint32[] calldata numbers = _numbers[start:end];
             // Storing the ticket information 
-            ticketInfo_[tokenIDsCount_] = TicketInfo(
+            ticketInfo_[tokenIdsCount_] = TicketInfo(
                 _to,
                 numbers,
                 false
             );
-            userTickets_[_to].push(tokenIDsCount_);
+            userTickets_[_to].push(tokenIdsCount_);
         }
         // Minting the batch of tokens
         _mintBatch(
             _to,
-            tokenIDs,
+            tokenIds,
             amounts,
             msg.data
         );
@@ -173,10 +180,10 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         emit InfoBatchMint(
             _to, 
             _numberOfTickets, 
-            tokenIDs
+            tokenIds
         ); 
         // Returns the token IDs of minted tokens
-        return tokenIDs;
+        return tokenIds;
     }
 
     function claimTicket(uint256 _ticketID) public onlyLotto() returns(bool) {
