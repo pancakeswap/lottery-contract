@@ -139,7 +139,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function batchMint(
         address _to,
         uint256 _lottoID,
-        uint32 _numberOfTickets,
+        uint8 _numberOfTickets,
         uint16[] calldata _numbers,
         uint8 sizeOfLottery
     )
@@ -151,7 +151,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         uint256[] memory amounts = new uint256[](_numberOfTickets);
         // Storage for the token IDs
         uint256[] memory tokenIds = new uint256[](_numberOfTickets);
-        for (uint16 i = 0; i < _numberOfTickets; i++) {
+        for (uint8 i = 0; i < _numberOfTickets; i++) {
             // Incrementing the tokenId counter
             tokenIdsCount_ = tokenIdsCount_.add(1);
             tokenIds[i] = tokenIdsCount_;

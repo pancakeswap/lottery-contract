@@ -98,7 +98,7 @@ contract Lotto is Ownable, Testable {
         uint256 pricePaid
     );
 
-    event requestNumbers(uint256 lotteryId, bytes32 requestId);
+    event RequestNumbers(uint256 lotteryId, bytes32 requestId);
 
     //-------------------------------------------------------------------------
     // MODIFIERS
@@ -193,9 +193,15 @@ contract Lotto is Ownable, Testable {
     ) 
         external 
         view 
-        returns(uint256 costWithDiscount) 
+        returns(
+            uint256 cost, 
+            uint256 discount, 
+            uint256 costWithDiscount
+        ) 
     {
-        costWithDiscount = _discount(_lotteryID, _numberOfTickets);
+        discount = _discount(_lotteryID, _numberOfTickets);
+        cost = this.costToBuyTickets(_lotteryID, _numberOfTickets);
+        costWithDiscount = cost.sub(discount);
     }
 
     function getBasicLottoInfo(uint256 _lotteryID) external view returns(
@@ -283,7 +289,7 @@ contract Lotto is Ownable, Testable {
         // Requests a random number from the generator
         requestId_ = randomGenerator_.getRandomNumber(_lotteryId, _seed);
         // Emits that random number has been requested
-        emit requestNumbers(_lotteryId, requestId_);
+        emit RequestNumbers(_lotteryId, requestId_);
     }
 
     function numbersDrawn(
@@ -407,8 +413,8 @@ contract Lotto is Ownable, Testable {
         uint16[] calldata _chosenNumbersForEachTicket
     )
         external
-        returns(uint256[] memory)
     {
+        // Ensuring the lottery is within a valid time
         require(
             getCurrentTime() >= allLotteries_[_lotteryID].startingTimestamp,
             "Invalid time for mint:start"
@@ -417,21 +423,24 @@ contract Lotto is Ownable, Testable {
             getCurrentTime() < allLotteries_[_lotteryID].closingTimestamp,
             "Invalid time for mint:end"
         );
-        uint256 numberCheck = _numberOfTickets*sizeOfLottery_;
+        // Temporary storage for the check of the chosen numbers array
+        uint256 numberCheck = _numberOfTickets.mul(sizeOfLottery_);
+        // Ensuring that there are the right amount of chosen numbers
         require(
             _chosenNumbersForEachTicket.length == numberCheck,
             "Invalid chosen numbers"
         );
-        // Gets the cost per ticket
-        uint256 costPerTicket = allLotteries_[_lotteryID].costPerTicket;
-        // TODO make this a function including the discount 
-        // Gets the total cost for the buy
-        uint256 totalCost = costPerTicket*_numberOfTickets;
+        // Getting the cost and discount for the token purchase
+        (
+            uint256 totalCost, 
+            uint256 discount, 
+            uint256 costWithDiscount
+        ) = this.costToBuyTicketsWithDiscount(_lotteryID, _numberOfTickets);
         // Transfers the required cake to this contract
         cake_.transferFrom(
             msg.sender, 
             address(this), 
-            totalCost
+            costWithDiscount
         );
         // Batch mints the user their tickets
         uint256[] memory ticketIds = nft_.batchMint(
@@ -447,10 +456,9 @@ contract Lotto is Ownable, Testable {
             ticketIds,
             _chosenNumbersForEachTicket,
             totalCost,
-            0, // TODO
-            totalCost
+            discount,
+            costWithDiscount
         );
-        return ticketIds;
     }
 
 
@@ -607,7 +615,7 @@ contract Lotto is Ownable, Testable {
         // Getting the percentage of the pool the user has won
         uint256 perOfPool = allLotteries_[_lotteryID].prizeDistribution[_noOfMatching-1];
         // Timesing the percentage one by the pool
-        prize = allLotteries_[_lotteryID].prizePoolInCake*perOfPool;
+        prize = allLotteries_[_lotteryID].prizePoolInCake.mul(perOfPool);
         // Returning the prize divided by 100 (as the prize distribution is scaled)
         return prize/100;
     }
@@ -615,30 +623,16 @@ contract Lotto is Ownable, Testable {
     function _split(
         uint256 _randomNumber
     ) 
-        public 
+        internal
         view 
         returns(uint16[] memory) 
     {
-
-
-        if(maxValidRange_ < 100) {
-
-        }
-        uint256 position = 10;
-        uint256 previousPosition = 10;
-        uint256 number = 0;
         uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
-        for (uint256 i = 0; i < sizeOfLottery_; i++) {
-            if(i == 0) {
-                number = _randomNumber % position;
-                position = uint256(10).mul(position);
-            } else {
-                number = _randomNumber % position / previousPosition;
-                previousPosition = position;
-                position = uint256(10).mul(position);
-            }
-            winningNumbers[i] = uint16(number);
+        for(uint i = 0; i < sizeOfLottery_; i++){
+            bytes32 hash = keccak256(abi.encodePacked(_randomNumber, i));
+            uint256 numberRepresentation = uint256(hash);
+            winningNumbers[i] = uint16(numberRepresentation % maxValidRange_);
         }
-        return winningNumbers;
+    return winningNumbers;
     }
 }
