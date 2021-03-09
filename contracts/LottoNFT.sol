@@ -187,6 +187,10 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     }
 
     function claimTicket(uint256 _ticketID) public onlyLotto() returns(bool) {
+        require(
+            ticketInfo_[_ticketID].claimed == false,
+            "Ticket already claimed"
+        );
         uint256 maxRange = ILottery(lottoContract_).getMaxRange();
         for (uint256 i = 0; i < ticketInfo_[_ticketID].numbers.length; i++) {
             if(ticketInfo_[_ticketID].numbers[i] > maxRange) {

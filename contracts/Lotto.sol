@@ -392,11 +392,7 @@ contract Lotto is Ownable, Testable {
             nft_.getOwnerOfTicket(_tokenId) == msg.sender,
             "Only the owner can claim"
         );
-        require(
-            nft_.getTicketClaimStatus(_tokenId) == false,
-            "Ticket has been claimed"
-        );
-        // Sets the claim of the ticket to true
+        // Sets the claim of the ticket to true (if claimed, will revert)
         require(
             nft_.claimTicket(_tokenId),
             "Numbers for ticket invalid"
