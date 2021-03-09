@@ -15,6 +15,8 @@ import "./ILottoNFT.sol";
 // Allows for time manipulation. Set to 0x address on test/mainnet deploy
 import "./Testable.sol";
 
+import "./Strings.sol";
+
 // TODO rename to Lottery when done
 contract Lotto is Ownable, Testable {
     // Libraries 
@@ -25,6 +27,8 @@ contract Lotto is Ownable, Testable {
     using SafeMath for uint256;
     // Safe ERC20
     using SafeERC20 for IERC20;
+
+    using Strings for string;
 
     // State variables 
     // Instance of Cake token (collateral currency for lotto)
@@ -193,7 +197,7 @@ contract Lotto is Ownable, Testable {
         // Checks lottery numbers have not already been drawn
         require(
             allLotteries_[_lotteryId].lotteryStatus != Status.Closed,
-            "Winning Numbers chosen"
+            "Winning Numbers drawn"
         );
         // Sets lottery status to closed
         allLotteries_[_lotteryId].lotteryStatus = Status.Closed;
@@ -217,20 +221,7 @@ contract Lotto is Ownable, Testable {
         );
         if(requestId_ == _requestId) {
             allLotteries_[_lotteryId].lotteryStatus = Status.Completed;
-            uint256 position = 10;
-            uint256 previousPosition = 10;
-            uint256 number = 0;
-            for (uint256 i = 0; i < sizeOfLottery_; i++) {
-                if(i == 0) {
-                    number = _randomNumber % position;
-                    position = uint256(10).mul(position);
-                } else {
-                    number = _randomNumber % position / previousPosition;
-                    previousPosition = position;
-                    position = uint256(10).mul(position);
-                }
-                allLotteries_[_lotteryId].winningNumbers[i] = uint32(number);
-            }
+            allLotteries_[_lotteryId].winningNumbers = split(_randomNumber);
         }
     }
 
@@ -529,13 +520,18 @@ contract Lotto is Ownable, Testable {
         return prize/100;
     }
 
-    function splitLessTen(
+    function split(
         uint256 _randomNumber
     ) 
         public 
         view 
         returns(uint32[] memory) 
     {
+
+
+        if(maxValidRange_ < 100) {
+
+        }
         uint256 position = 10;
         uint256 previousPosition = 10;
         uint256 number = 0;
