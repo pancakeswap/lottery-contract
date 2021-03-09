@@ -16,6 +16,8 @@ describe("Lottery contract", function() {
     let cakeInstance, cakeContract;
     // Creating the instance and contract info for the timer contract
     let timerInstance, timerContract;
+    // Creating the instance and contract info for the mock rand gen
+    let randInstance, randContract;
     // Creating the users
     let owner, buyer;
 
@@ -33,17 +35,25 @@ describe("Lottery contract", function() {
         cakeContract = await ethers.getContractFactory("Mock_erc20");
         // Getting the timer code (abi, bytecode, name)
         timerContract = await ethers.getContractFactory("Timer");
+        // Getting the mock rand code (abi, bytecode, name)
+        randContract = await ethers.getContractFactory("Mock_rand_gen");
         // Deploying the instances
         timerInstance = await timerContract.deploy();
         cakeInstance = await cakeContract.deploy(
             lotto.buy.cake,
+        );
+        randInstance = await randContract.deploy(
+            owner.address,
+            cakeInstance.address,
+            "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4",
+            100
         );
         lotteryInstance = await lotteryContract.deploy(
             cakeInstance.address,
             timerInstance.address,
             lotto.setup.sizeOfLottery,
             lotto.setup.maxValidRange,
-            owner.address
+            randInstance.address
         );
         lotteryNftInstance = await lotteryNftContract.deploy(
             lottoNFT.newLottoNft.uri,
@@ -532,7 +542,11 @@ describe("Lottery contract", function() {
             // Drawing the numbers
             await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
-                [1,2,3,4]
+                1234
+            );
+            await randInstance.connect(owner).fulfillRandomness(
+                1,
+                lotto.draw.random
             );
             let lotteryInfoAfter = await lotteryInstance.getBasicLottoInfo(1);
 
@@ -1369,12 +1383,12 @@ describe("Lottery contract", function() {
             await lotteryInstance.setCurrentTime(futureTime.toString());
         });
 
-        it.only("Get split", async function() {
+        it("Get split", async function() {
             // let random = BigNumber(lotto.draw.random);
             let random = BigNumber(
                 lotto.draw.random.toString()
             );
-            let split = await lotteryInstance.splitLessTen(
+            let split = await lotteryInstance.split(
                 lotto.draw.random
             );
             console.log(split)
