@@ -384,7 +384,6 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
             );
             // If token has already been claimed, skip token
             if(
-                nft_.getTicketClaimStatus(_tokeIDs[i]) || 
                 nft_.getTicketClaimStatus(_tokeIDs[i])
             ) {
                 continue;
