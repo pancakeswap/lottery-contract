@@ -13,7 +13,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     // Libraries 
     // Safe math
     using SafeMath for uint256;
-    using SafeMath for uint32;
+    using SafeMath for uint16;
     using SafeMath for uint8;
 
     // Counter for token IDs
@@ -23,7 +23,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     // Storage for ticket information
     struct TicketInfo {
         address owner;
-        uint32[] numbers;
+        uint16[] numbers;
         bool claimed;
     }
     // Token ID => Token information 
@@ -93,7 +93,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     ) 
         public 
         view 
-        returns(uint32[] memory) 
+        returns(uint16[] memory) 
     {
         return ticketInfo_[_ticketID].numbers;
     }
@@ -140,7 +140,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         address _to,
         uint256 _lottoID,
         uint32 _numberOfTickets,
-        uint32[] calldata _numbers,
+        uint16[] calldata _numbers,
         uint8 sizeOfLottery
     )
         external
@@ -151,16 +151,16 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         uint256[] memory amounts = new uint256[](_numberOfTickets);
         // Storage for the token IDs
         uint256[] memory tokenIds = new uint256[](_numberOfTickets);
-        for (uint32 i = 0; i < _numberOfTickets; i += 1) {
+        for (uint16 i = 0; i < _numberOfTickets; i += 1) {
             // Incrementing the tokenId counter
             tokenIdsCount_ += 1;
             tokenIds[i] = tokenIdsCount_;
             amounts[i] = 1;
             // Getting the start and end position of numbers for this ticket
-            uint32 start = i*sizeOfLottery;
-            uint32 end = (i+1)*sizeOfLottery;
+            uint16 start = uint16(i.mul(sizeOfLottery));
+            uint16 end = uint16((i.add(1)).mul(sizeOfLottery));
             // Splitting out the chosen numbers
-            uint32[] calldata numbers = _numbers[start:end];
+            uint16[] calldata numbers = _numbers[start:end];
             // Storing the ticket information 
             ticketInfo_[tokenIdsCount_] = TicketInfo(
                 _to,
