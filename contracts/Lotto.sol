@@ -15,8 +15,6 @@ import "./ILottoNFT.sol";
 // Allows for time manipulation. Set to 0x address on test/mainnet deploy
 import "./Testable.sol";
 
-import "./Strings.sol";
-
 // TODO rename to Lottery when done
 contract Lotto is Ownable, Testable {
     // Libraries 
@@ -30,8 +28,6 @@ contract Lotto is Ownable, Testable {
     // Safe ERC20
     using SafeERC20 for IERC20;
 
-    using Strings for string;
-
     // State variables 
     // Instance of Cake token (collateral currency for lotto)
     IERC20 internal cake_;
@@ -39,12 +35,21 @@ contract Lotto is Ownable, Testable {
     ILottoNFT internal nft_;
     // Storing of the randomness generator 
     RandomNumberGenerator internal randomGenerator_;
+    // Request ID for random number
     bytes32 internal requestId_;
 
     // Lottery size
     uint8 public sizeOfLottery_;
     // Max range for numbers (starting at 0)
     uint16 public maxValidRange_;
+    // Buckets for discounts (i.e bucketOneMax_ = 20, less than 20 tickets gets
+    // discount)
+    uint8 public bucketOneMax_;
+    uint8 public bucketTwoMax_;
+    // Bucket discount amounts scaled by 100 (i.e 20% = 20)
+    uint8 public discountForBucketOne_;
+    uint8 public discountForBucketTwo_;
+    uint8 public discountForBucketThree_;
 
     // Represents the status of the lottery
     enum Status { 
@@ -116,18 +121,53 @@ contract Lotto is Ownable, Testable {
         address _timer,
         uint8 _sizeOfLotteryNumbers,
         uint16 _maxValidNumberRange,
-        address _randomNumberGenerator
+        address _randomNumberGenerator,
+        uint8 _bucketOneMaxNumber,
+        uint8 _bucketTwoMaxNumber,
+        uint8 _discountForBucketOne,
+        uint8 _discountForBucketTwo,
+        uint8 _discountForBucketThree
     ) 
         Testable(_timer)
         public
     {
+        require(
+            _bucketOneMaxNumber != 0 &&
+            _bucketTwoMaxNumber != 0,
+            "Bucket range cannot be 0"
+        );
+        require(
+            _discountForBucketOne < _discountForBucketTwo &&
+            _discountForBucketTwo < _discountForBucketThree,
+            "Discounts must increase"
+        );
+        require(
+            _cake != address(0) &&
+            _randomNumberGenerator != address(0),
+            "Contracts cannot be 0 address"
+        );
+        require(
+            _sizeOfLotteryNumbers != 0 &&
+            _maxValidNumberRange != 0,
+            "Lottery setup cannot be 0"
+        );
         cake_ = IERC20(_cake);
         sizeOfLottery_ = _sizeOfLotteryNumbers;
         maxValidRange_ = _maxValidNumberRange;
         randomGenerator_ = RandomNumberGenerator(_randomNumberGenerator);
+        bucketOneMax_ = _bucketOneMaxNumber;
+        bucketTwoMax_ = _bucketTwoMaxNumber;
+        discountForBucketOne_ = _discountForBucketOne;
+        discountForBucketTwo_ = _discountForBucketTwo;
+        discountForBucketThree_ = _discountForBucketThree;
     }
 
-    function init(address _lotteryNFT) external onlyOwner() {
+    function init(
+        address _lotteryNFT
+    ) 
+        external 
+        onlyOwner() 
+    {
         nft_ = ILottoNFT(_lotteryNFT);
     }
 
@@ -145,6 +185,17 @@ contract Lotto is Ownable, Testable {
     {
         uint256 pricePer = allLotteries_[_lotteryID].costPerTicket;
         totalCost = pricePer.mul(_numberOfTickets);
+    }
+
+    function costToBuyTicketsWithDiscount(
+        uint256 _lotteryID,
+        uint256 _numberOfTickets
+    ) 
+        external 
+        view 
+        returns(uint256 costWithDiscount) 
+    {
+        costWithDiscount = _discount(_lotteryID, _numberOfTickets);
     }
 
     function getBasicLottoInfo(uint256 _lotteryID) external view returns(
@@ -183,6 +234,32 @@ contract Lotto is Ownable, Testable {
         maxValidRange_ = _newMaxRange;
     }
 
+    function updateBuckets(
+        uint8 _bucketOneMax,
+        uint8 _bucketTwoMax,
+        uint8 _discountForBucketOne,
+        uint8 _discountForBucketTwo,
+        uint8 _discountForBucketThree
+    )
+        external
+        onlyOwner() 
+    {
+        require(
+            _bucketOneMax != 0 &&
+            _bucketTwoMax != 0,
+            "Bucket range cannot be 0"
+        );
+        require(
+            _discountForBucketOne < _discountForBucketTwo &&
+            _discountForBucketTwo < _discountForBucketThree,
+            "Discounts must increase"
+        );
+        bucketOneMax_ = _bucketOneMax;
+        bucketTwoMax_ = _bucketTwoMax;
+        discountForBucketOne_ = _discountForBucketOne;
+        discountForBucketTwo_ = _discountForBucketTwo;
+        discountForBucketThree_ = _discountForBucketThree;
+    }
 
     function drawWinningNumbers(
         uint256 _lotteryId, 
@@ -223,7 +300,7 @@ contract Lotto is Ownable, Testable {
         );
         if(requestId_ == _requestId) {
             allLotteries_[_lotteryId].lotteryStatus = Status.Completed;
-            allLotteries_[_lotteryId].winningNumbers = split(_randomNumber);
+            allLotteries_[_lotteryId].winningNumbers = _split(_randomNumber);
         }
     }
 
@@ -262,7 +339,7 @@ contract Lotto is Ownable, Testable {
             "Invalid distribution"
         );
         uint256 prizeDistributionTotal = 0;
-        for (uint256 j = 0; j < _prizeDistribution.length; j += 1) {
+        for (uint256 j = 0; j < _prizeDistribution.length; j++) {
             prizeDistributionTotal = prizeDistributionTotal.add(
                 uint256(_prizeDistribution[j])
             );
@@ -398,12 +475,12 @@ contract Lotto is Ownable, Testable {
             "Numbers for ticket invalid"
         );
         // Getting the number of matching tickets
-        uint8 matchingNumbers = getNumberOfMatching(
+        uint8 matchingNumbers = _getNumberOfMatching(
             nft_.getTicketNumbers(_tokenId),
             allLotteries_[_lotteryId].winningNumbers
         );
         // Getting the prize amount for those matching tickets
-        uint256 prizeAmount = prizeForMatching(
+        uint256 prizeAmount = _prizeForMatching(
             matchingNumbers,
             _lotteryId
         );
@@ -448,12 +525,12 @@ contract Lotto is Ownable, Testable {
                 "Numbers for ticket invalid"
             );
             // Getting the number of matching tickets
-            uint8 matchingNumbers = getNumberOfMatching(
+            uint8 matchingNumbers = _getNumberOfMatching(
                 nft_.getTicketNumbers(_tokeIDs[i]),
                 allLotteries_[_lotteryID].winningNumbers
             );
             // Getting the prize amount for those matching tickets
-            uint256 prizeAmount = prizeForMatching(
+            uint256 prizeAmount = _prizeForMatching(
                 matchingNumbers,
                 _lotteryID
             );
@@ -469,7 +546,28 @@ contract Lotto is Ownable, Testable {
     // INTERNAL FUNCTIONS 
     //-------------------------------------------------------------------------
 
-    function getNumberOfMatching(
+    function _discount(
+        uint256 lotteryId, 
+        uint256 _numberOfTickets
+    )
+        internal 
+        view
+        returns(uint256 discountAmount)
+    {
+        uint256 cost = this.costToBuyTickets(lotteryId, _numberOfTickets);
+        if(_numberOfTickets < bucketOneMax_) {
+            discountAmount = cost.mul(discountForBucketOne_).div(100);
+        } else if(
+            _numberOfTickets >= bucketOneMax_ && 
+            _numberOfTickets < bucketTwoMax_
+        ) {
+            discountAmount = cost.mul(discountForBucketTwo_).div(100);
+        } else {
+            discountAmount = cost.mul(discountForBucketThree_).div(100);
+        }
+    }
+
+    function _getNumberOfMatching(
         uint16[] memory _usersNumbers, 
         uint16[] memory _winningNumbers
     )
@@ -493,7 +591,7 @@ contract Lotto is Ownable, Testable {
      * @param   _lotteryID: The ID of the lottery the user is claiming on
      * @return  uint256: The prize amount in cake the user is entitled to 
      */
-    function prizeForMatching(
+    function _prizeForMatching(
         uint8 _noOfMatching,
         uint256 _lotteryID
     ) 
@@ -514,7 +612,7 @@ contract Lotto is Ownable, Testable {
         return prize/100;
     }
 
-    function split(
+    function _split(
         uint256 _randomNumber
     ) 
         public 

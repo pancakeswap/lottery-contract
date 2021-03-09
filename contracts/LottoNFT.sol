@@ -151,9 +151,9 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         uint256[] memory amounts = new uint256[](_numberOfTickets);
         // Storage for the token IDs
         uint256[] memory tokenIds = new uint256[](_numberOfTickets);
-        for (uint16 i = 0; i < _numberOfTickets; i += 1) {
+        for (uint16 i = 0; i < _numberOfTickets; i++) {
             // Incrementing the tokenId counter
-            tokenIdsCount_ += 1;
+            tokenIdsCount_ = tokenIdsCount_.add(1);
             tokenIds[i] = tokenIdsCount_;
             amounts[i] = 1;
             // Getting the start and end position of numbers for this ticket
