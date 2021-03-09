@@ -13,7 +13,7 @@ interface ILottoNFT {
     ) 
         external 
         view 
-        returns(uint32[] memory);
+        returns(uint16[] memory);
 
     function getOwnerOfTicket(
         uint256 _ticketID
@@ -36,8 +36,8 @@ interface ILottoNFT {
     function batchMint(
         address _to,
         uint256 _lottoID,
-        uint32 _numberOfTickets,
-        uint32[] calldata _numbers,
+        uint8 _numberOfTickets,
+        uint16[] calldata _numbers,
         uint8 sizeOfLottery
     )
         external

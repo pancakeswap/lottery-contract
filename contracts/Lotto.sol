@@ -25,7 +25,7 @@ contract Lotto is Ownable, Testable {
     Counters.Counter private lotteryIDCounter_;
     // Safe math
     using SafeMath for uint256;
-    using SafeMath for uint32;
+    using SafeMath for uint16;
     using SafeMath for uint8;
     // Safe ERC20
     using SafeERC20 for IERC20;
@@ -44,7 +44,7 @@ contract Lotto is Ownable, Testable {
     // Lottery size
     uint8 public sizeOfLottery_;
     // Max range for numbers (starting at 0)
-    uint32 public maxValidRange_;
+    uint16 public maxValidRange_;
 
     // Represents the status of the lottery
     enum Status { 
@@ -63,7 +63,7 @@ contract Lotto is Ownable, Testable {
         uint256 startingTimestamp;      // Block timestamp for star of lotto
         uint256 closingTimestamp;       // Block timestamp for end of entries
         uint256 endTimestamp;           // Block timestamp for claiming winnings
-        uint32[] winningNumbers;     // The winning numbers
+        uint16[] winningNumbers;     // The winning numbers
     }
     // Lottery ID's to info
     mapping(uint256 => LottoInfo) internal allLotteries_;
@@ -87,7 +87,7 @@ contract Lotto is Ownable, Testable {
     event NewBatchMint(
         address indexed minter,
         uint256[] ticketIDs,
-        uint32[] numbers,
+        uint16[] numbers,
         uint256 totalCost,
         uint256 discount,
         uint256 pricePaid
@@ -115,7 +115,7 @@ contract Lotto is Ownable, Testable {
         address _cake, 
         address _timer,
         uint8 _sizeOfLotteryNumbers,
-        uint32 _maxValidNumberRange,
+        uint16 _maxValidNumberRange,
         address _randomNumberGenerator
     ) 
         Testable(_timer)
@@ -156,7 +156,7 @@ contract Lotto is Ownable, Testable {
         ); 
     }
 
-    function getMaxRange() public view returns(uint32) {
+    function getMaxRange() public view returns(uint16) {
         return maxValidRange_;
     }
 
@@ -175,7 +175,7 @@ contract Lotto is Ownable, Testable {
         sizeOfLottery_ = _newSize;
     }
 
-    function updateMaxRange(uint32 _newMaxRange) external onlyOwner() {
+    function updateMaxRange(uint16 _newMaxRange) external onlyOwner() {
         require(
             maxValidRange_ != _newMaxRange,
             "Cannot set to current size"
@@ -285,7 +285,7 @@ contract Lotto is Ownable, Testable {
         // Incrementing lottery ID 
         lotteryIDCounter_.increment();
         lotteryId = lotteryIDCounter_.current();
-        uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
+        uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
         // Saving data in struct
         LottoInfo memory newLottery = LottoInfo(
             lotteryId,
@@ -326,8 +326,8 @@ contract Lotto is Ownable, Testable {
 
     function batchBuyLottoTicket(
         uint256 _lotteryID,
-        uint32 _numberOfTickets,
-        uint32[] memory _chosenNumbersForEachTicket
+        uint8 _numberOfTickets,
+        uint16[] memory _chosenNumbersForEachTicket
     )
         external
         returns(uint256[] memory)
@@ -474,8 +474,8 @@ contract Lotto is Ownable, Testable {
     //-------------------------------------------------------------------------
 
     function getNumberOfMatching(
-        uint32[] memory _usersNumbers, 
-        uint32[] memory _winningNumbers
+        uint16[] memory _usersNumbers, 
+        uint16[] memory _winningNumbers
     )
         internal
         pure
@@ -523,7 +523,7 @@ contract Lotto is Ownable, Testable {
     ) 
         public 
         view 
-        returns(uint32[] memory) 
+        returns(uint16[] memory) 
     {
 
 
@@ -533,7 +533,7 @@ contract Lotto is Ownable, Testable {
         uint256 position = 10;
         uint256 previousPosition = 10;
         uint256 number = 0;
-        uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
+        uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
         for (uint256 i = 0; i < sizeOfLottery_; i++) {
             if(i == 0) {
                 number = _randomNumber % position;
@@ -543,7 +543,7 @@ contract Lotto is Ownable, Testable {
                 previousPosition = position;
                 position = uint256(10).mul(position);
             }
-            winningNumbers[i] = uint32(number);
+            winningNumbers[i] = uint16(number);
         }
         return winningNumbers;
     }
