@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@chainlink/contracts@^0.1.6":
+"@chainlink/contracts@0.1.6":
   version "0.1.6"
   resolved "https://registry.yarnpkg.com/@chainlink/contracts/-/contracts-0.1.6.tgz#e4795565c723f99adaf6e97382cfb41dff0bcf91"
   integrity sha512-RXKMm+3ADEi1c4/XsXy2Z1m0KQh7H6Nn0FWXmCgXRIorOBt7dvh52c0c41ONJfIhHB/tGeoXnp4lPnZEDqkocA==
@@ -7282,6 +7282,10 @@ solidity-coverage@0.7.16:
     semver "^7.3.4"
     shelljs "^0.8.3"
     web3-utils "^1.3.0"
+
+solidity-util@willitscale/solidity-util:
+  version "2.0.0"
+  resolved "https://codeload.github.com/willitscale/solidity-util/tar.gz/000a42d4d7c1491cde4381c29d4b775fa7e99aac"
 
 source-map-resolve@^0.5.0:
   version "0.5.3"
