@@ -223,11 +223,11 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/ILottoNFT.sol": {
-      "lastModificationDate": 1615193225574,
-      "contentHash": "4931b7bd74f54309a7b486746a8f87b0",
+      "lastModificationDate": 1615273303662,
+      "contentHash": "b224a428c45483890684072b345f97f6",
       "sourceName": "contracts/ILottoNFT.sol",
       "solcConfig": {
-        "version": "0.7.3",
+        "version": "0.6.12",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -250,18 +250,18 @@
       },
       "imports": [],
       "versionPragmas": [
-        "0.7.3"
+        "^0.6.0"
       ],
       "artifacts": [
         "ILottoNFT"
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1615219505111,
-      "contentHash": "93db80a944fb4a00283f35319a666908",
+      "lastModificationDate": 1615276160980,
+      "contentHash": "b5162688933781fdad3bd96343921870",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
-        "version": "0.7.3",
+        "version": "0.6.12",
         "settings": {
           "optimizer": {
             "enabled": false,
@@ -286,13 +286,14 @@
         "@openzeppelin/contracts/token/ERC20/IERC20.sol",
         "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
         "@openzeppelin/contracts/utils/Counters.sol",
-        "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "./RandomNumberGenerator.sol",
         "./ILottoNFT.sol",
         "./Testable.sol"
       ],
       "versionPragmas": [
-        "0.7.3"
+        ">0.6.0"
       ],
       "artifacts": [
         "Lotto"
@@ -477,8 +478,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Testable.sol": {
-      "lastModificationDate": 1615132186171,
-      "contentHash": "c73bcc4e7c1fcaa864c18ecfbdb57208",
+      "lastModificationDate": 1615273487387,
+      "contentHash": "04a9c377710e9decd749f06366c059f2",
       "sourceName": "contracts/Testable.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -506,7 +507,7 @@
         "./Timer.sol"
       ],
       "versionPragmas": [
-        "0.7.3"
+        ">0.6.0"
       ],
       "artifacts": [
         "Testable"
@@ -581,8 +582,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Timer.sol": {
-      "lastModificationDate": 1615132179685,
-      "contentHash": "e42da3268d64cbfddec7ae3ddc2b90aa",
+      "lastModificationDate": 1615273506449,
+      "contentHash": "be4b80d4567d09d03be56dfdec2396a0",
       "sourceName": "contracts/Timer.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -608,7 +609,7 @@
       },
       "imports": [],
       "versionPragmas": [
-        "0.7.3"
+        ">0.6.0"
       ],
       "artifacts": [
         "Timer"
@@ -1443,6 +1444,182 @@
       ],
       "artifacts": [
         "ILottery"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/RandomNumberGenerator.sol": {
+      "lastModificationDate": 1615275965865,
+      "contentHash": "e361b000c835c5b70c52f97a280425a6",
+      "sourceName": "contracts/RandomNumberGenerator.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol"
+      ],
+      "versionPragmas": [
+        ">0.6.0"
+      ],
+      "artifacts": [
+        "RandomNumberGenerator"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@chainlink/contracts/src/v0.6/VRFConsumerBase.sol": {
+      "lastModificationDate": 1615134740586,
+      "contentHash": "d0814ffd4b6a10aaed8b311ff73f341a",
+      "sourceName": "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./vendor/SafeMathChainlink.sol",
+        "./interfaces/LinkTokenInterface.sol",
+        "./VRFRequestIDBase.sol"
+      ],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "VRFConsumerBase"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@chainlink/contracts/src/v0.6/vendor/SafeMathChainlink.sol": {
+      "lastModificationDate": 1615134741012,
+      "contentHash": "5caf46296cfce2e0b96cb3028b626ee5",
+      "sourceName": "@chainlink/contracts/src/v0.6/vendor/SafeMathChainlink.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "SafeMathChainlink"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@chainlink/contracts/src/v0.6/interfaces/LinkTokenInterface.sol": {
+      "lastModificationDate": 1615134740964,
+      "contentHash": "bb291d0e43a81edd96f781b2760d9553",
+      "sourceName": "@chainlink/contracts/src/v0.6/interfaces/LinkTokenInterface.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "LinkTokenInterface"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/node_modules/@chainlink/contracts/src/v0.6/VRFRequestIDBase.sol": {
+      "lastModificationDate": 1615134740586,
+      "contentHash": "d06006d32515b595a7b70c88328ffd7e",
+      "sourceName": "@chainlink/contracts/src/v0.6/VRFRequestIDBase.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "VRFRequestIDBase"
       ]
     }
   }
