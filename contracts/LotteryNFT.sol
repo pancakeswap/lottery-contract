@@ -5,18 +5,25 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./ILottery.sol";
 import "./Testable.sol";
 
-contract LottoNFT is ERC1155, Ownable, Testable {
+contract LotteryNFT is ERC1155, Ownable, Testable {
+    // Libraries 
+    // Safe math
+    using SafeMath for uint256;
+    using SafeMath for uint16;
+    using SafeMath for uint8;
+
     // Counter for token IDs
-    uint256 internal tokenIDsCount_ = 0;
+    uint256 internal tokenIdsCount_ = 0;
     // State variables 
-    address internal lottoContract_;
+    address internal lotteryContract_;
     // Storage for ticket information
     struct TicketInfo {
         address owner;
-        uint32[] numbers;
+        uint16[] numbers;
         bool claimed;
     }
     // Token ID => Token information 
@@ -30,7 +37,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     event InfoBatchMint(
         address indexed receiving, 
         uint256 amountOfTokens, 
-        uint256[] tokenIDs
+        uint256[] tokenIds
     );
 
     //-------------------------------------------------------------------------
@@ -42,7 +49,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
      */
     modifier onlyLotto() {
         require(
-            msg.sender == lottoContract_,
+            msg.sender == lotteryContract_,
             "Only Lotto can mint"
         );
         _;
@@ -70,7 +77,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     Testable(_timer)
     {
         // Only Lotto contract will be able to mint new tokens
-        lottoContract_ = _lotto;
+        lotteryContract_ = _lotto;
     }
 
     //-------------------------------------------------------------------------
@@ -84,9 +91,9 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function getTicketNumbers(
         uint256 _ticketID
     ) 
-        public 
+        external 
         view 
-        returns(uint32[] memory) 
+        returns(uint16[] memory) 
     {
         return ticketInfo_[_ticketID].numbers;
     }
@@ -98,7 +105,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function getOwnerOfTicket(
         uint256 _ticketID
     ) 
-        public 
+        external 
         view 
         returns(address) 
     {
@@ -108,14 +115,14 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function getTicketClaimStatus(
         uint256 _ticketID
     ) 
-        public 
+        external 
         view
         returns(bool) 
     {
         return ticketInfo_[_ticketID].claimed;
     }
 
-    function getUserTickets(address _user) public view returns(uint256[] memory) {
+    function getUserTickets(address _user) external view returns(uint256[] memory) {
         return userTickets_[_user];
     }
 
@@ -132,8 +139,8 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function batchMint(
         address _to,
         uint256 _lottoID,
-        uint32 _numberOfTickets,
-        uint32[] calldata _numbers,
+        uint8 _numberOfTickets,
+        uint16[] calldata _numbers,
         uint8 sizeOfLottery
     )
         external
@@ -143,29 +150,29 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         // Storage for the amount of tokens to mint (always 1)
         uint256[] memory amounts = new uint256[](_numberOfTickets);
         // Storage for the token IDs
-        uint256[] memory tokenIDs = new uint256[](_numberOfTickets);
-        for (uint32 i = 0; i < _numberOfTickets; i += 1) {
-            // Incrementing the tokenID counter
-            tokenIDsCount_ += 1;
-            tokenIDs[i] = tokenIDsCount_;
+        uint256[] memory tokenIds = new uint256[](_numberOfTickets);
+        for (uint8 i = 0; i < _numberOfTickets; i++) {
+            // Incrementing the tokenId counter
+            tokenIdsCount_ = tokenIdsCount_.add(1);
+            tokenIds[i] = tokenIdsCount_;
             amounts[i] = 1;
             // Getting the start and end position of numbers for this ticket
-            uint32 start = i*sizeOfLottery;
-            uint32 end = (i+1)*sizeOfLottery;
+            uint16 start = uint16(i.mul(sizeOfLottery));
+            uint16 end = uint16((i.add(1)).mul(sizeOfLottery));
             // Splitting out the chosen numbers
-            uint32[] calldata numbers = _numbers[start:end];
+            uint16[] calldata numbers = _numbers[start:end];
             // Storing the ticket information 
-            ticketInfo_[tokenIDsCount_] = TicketInfo(
+            ticketInfo_[tokenIdsCount_] = TicketInfo(
                 _to,
                 numbers,
                 false
             );
-            userTickets_[_to].push(tokenIDsCount_);
+            userTickets_[_to].push(tokenIdsCount_);
         }
         // Minting the batch of tokens
         _mintBatch(
             _to,
-            tokenIDs,
+            tokenIds,
             amounts,
             msg.data
         );
@@ -173,14 +180,18 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         emit InfoBatchMint(
             _to, 
             _numberOfTickets, 
-            tokenIDs
+            tokenIds
         ); 
         // Returns the token IDs of minted tokens
-        return tokenIDs;
+        return tokenIds;
     }
 
-    function claimTicket(uint256 _ticketID) public onlyLotto() returns(bool) {
-        uint256 maxRange = ILottery(lottoContract_).getMaxRange();
+    function claimTicket(uint256 _ticketID) external onlyLotto() returns(bool) {
+        require(
+            ticketInfo_[_ticketID].claimed == false,
+            "Ticket already claimed"
+        );
+        uint256 maxRange = ILottery(lotteryContract_).getMaxRange();
         for (uint256 i = 0; i < ticketInfo_[_ticketID].numbers.length; i++) {
             if(ticketInfo_[_ticketID].numbers[i] > maxRange) {
                 return false;

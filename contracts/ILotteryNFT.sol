@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.7.3;
+pragma solidity >= 0.6.0 < 0.8.0;
 pragma experimental ABIEncoderV2;
 
-interface ILottoNFT {
+interface ILotteryNFT {
 
     //-------------------------------------------------------------------------
     // VIEW FUNCTIONS
@@ -13,7 +13,7 @@ interface ILottoNFT {
     ) 
         external 
         view 
-        returns(uint32[] memory);
+        returns(uint16[] memory);
 
     function getOwnerOfTicket(
         uint256 _ticketID
@@ -36,8 +36,8 @@ interface ILottoNFT {
     function batchMint(
         address _to,
         uint256 _lottoID,
-        uint32 _numberOfTickets,
-        uint32[] calldata _numbers,
+        uint8 _numberOfTickets,
+        uint16[] calldata _numbers,
         uint8 sizeOfLottery
     )
         external
