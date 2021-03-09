@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1615296541006,
-      "contentHash": "cea0535e7058e8ae096ff9100e994676",
+      "lastModificationDate": 1615298335906,
+      "contentHash": "d078b8d514d047bd367a08cfce1d73f9",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -35,8 +35,7 @@
         "@openzeppelin/contracts/access/Ownable.sol",
         "./RandomNumberGenerator.sol",
         "./ILottoNFT.sol",
-        "./Testable.sol",
-        "./Strings.sol"
+        "./Testable.sol"
       ],
       "versionPragmas": [
         ">0.6.0"
@@ -478,8 +477,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LottoNFT.sol": {
-      "lastModificationDate": 1615296574265,
-      "contentHash": "751fb2501d09bc516ee7c575aeee836f",
+      "lastModificationDate": 1615297966594,
+      "contentHash": "e5cbe149f2dd61fb8e8f659bc9dc8658",
       "sourceName": "contracts/LottoNFT.sol",
       "solcConfig": {
         "version": "0.7.3",
