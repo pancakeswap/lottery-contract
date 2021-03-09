@@ -178,7 +178,13 @@ contract Lotto is Ownable, Testable {
     }
 
 
-    function drawWinningNumbers(uint256 _lotteryId, uint256 _seed) external onlyOwner() {
+    function drawWinningNumbers(
+        uint256 _lotteryId, 
+        uint256 _seed
+    ) 
+        external 
+        onlyOwner() 
+    {
         // Checks that the lottery is past the closing block
         require(
             allLotteries_[_lotteryId].closingBlock <= getCurrentTime(),
@@ -211,13 +217,20 @@ contract Lotto is Ownable, Testable {
         );
         if(requestId_ == _requestId) {
             allLotteries_[_lotteryId].lotteryStatus = Status.Completed;
-            uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
+            uint256 position = 10;
+            uint256 previousPosition = 10;
+            uint256 number = 0;
             for (uint256 i = 0; i < sizeOfLottery_; i++) {
-                // TODO format random number to array of size of lottery
-                allLotteries_[_lotteryId].winningNumbers = winningNumbers;
-                
+                if(i == 0) {
+                    number = _randomNumber % position;
+                    position = uint256(10).mul(position);
+                } else {
+                    number = _randomNumber % position / previousPosition;
+                    previousPosition = position;
+                    position = uint256(10).mul(position);
+                }
+                allLotteries_[_lotteryId].winningNumbers[i] = uint32(number);
             }
-
         }
     }
 
@@ -276,10 +289,11 @@ contract Lotto is Ownable, Testable {
         );
         // Incrementing lottery ID 
         lotteryIDCounter_.increment();
+        lottoID = lotteryIDCounter_.current();
         uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
         // Saving data in struct
         LottoInfo memory newLottery = LottoInfo(
-            lotteryIDCounter_.current(),
+            lottoID,
             Status.NotStarted,
             _prizePoolInCake,
             _costPerTicket,
@@ -289,11 +303,11 @@ contract Lotto is Ownable, Testable {
             _endBlock,
             winningNumbers
         );
-        allLotteries_[lotteryIDCounter_.current()] = newLottery;
+        allLotteries_[lottoID] = newLottery;
 
         // Emitting important information around new lottery.
         emit NewLotteryCreated(
-            lotteryIDCounter_.current(),
+            lottoID,
             Status.NotStarted,
             _prizeDistribution,
             _prizePoolInCake,
@@ -302,6 +316,16 @@ contract Lotto is Ownable, Testable {
             _closingBlock,
             _endBlock,
             msg.sender
+        );
+    }
+
+    function withdrawCake() external onlyOwner() {
+        require(
+            cake_.transfer(
+                msg.sender, 
+                cake_.balanceOf(address(this))
+            ), 
+            "Unable to transfer"
         );
     }
 
@@ -465,7 +489,7 @@ contract Lotto is Ownable, Testable {
         uint32[] memory _winningNumbers
     )
         internal
-        view
+        pure
         returns(uint8)
     {
         uint8 noOfMatching = 0;
@@ -503,5 +527,30 @@ contract Lotto is Ownable, Testable {
         prize = allLotteries_[_lotteryID].prizePoolInCake*perOfPool;
         // Returning the prize divided by 100 (as the prize distribution is scaled)
         return prize/100;
+    }
+
+    function splitLessTen(
+        uint256 _randomNumber
+    ) 
+        public 
+        view 
+        returns(uint32[] memory) 
+    {
+        uint256 position = 10;
+        uint256 previousPosition = 10;
+        uint256 number = 0;
+        uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
+        for (uint256 i = 0; i < sizeOfLottery_; i++) {
+            if(i == 0) {
+                number = _randomNumber % position;
+                position = uint256(10).mul(position);
+            } else {
+                number = _randomNumber % position / previousPosition;
+                previousPosition = position;
+                position = uint256(10).mul(position);
+            }
+            winningNumbers[i] = uint32(number);
+        }
+        return winningNumbers;
     }
 }
