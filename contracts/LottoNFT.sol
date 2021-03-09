@@ -91,7 +91,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function getTicketNumbers(
         uint256 _ticketID
     ) 
-        public 
+        external 
         view 
         returns(uint16[] memory) 
     {
@@ -105,7 +105,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function getOwnerOfTicket(
         uint256 _ticketID
     ) 
-        public 
+        external 
         view 
         returns(address) 
     {
@@ -115,14 +115,14 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     function getTicketClaimStatus(
         uint256 _ticketID
     ) 
-        public 
+        external 
         view
         returns(bool) 
     {
         return ticketInfo_[_ticketID].claimed;
     }
 
-    function getUserTickets(address _user) public view returns(uint256[] memory) {
+    function getUserTickets(address _user) external view returns(uint256[] memory) {
         return userTickets_[_user];
     }
 
@@ -186,7 +186,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
         return tokenIds;
     }
 
-    function claimTicket(uint256 _ticketID) public onlyLotto() returns(bool) {
+    function claimTicket(uint256 _ticketID) external onlyLotto() returns(bool) {
         require(
             ticketInfo_[_ticketID].claimed == false,
             "Ticket already claimed"

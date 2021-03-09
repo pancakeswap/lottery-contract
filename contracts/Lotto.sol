@@ -127,7 +127,7 @@ contract Lotto is Ownable, Testable {
         randomGenerator_ = RandomNumberGenerator(_randomNumberGenerator);
     }
 
-    function init(address _lotteryNFT) public onlyOwner() {
+    function init(address _lotteryNFT) external onlyOwner() {
         nft_ = ILottoNFT(_lotteryNFT);
     }
 
@@ -139,7 +139,7 @@ contract Lotto is Ownable, Testable {
         uint256 _lotteryID,
         uint256 _numberOfTickets
     ) 
-        public 
+        external 
         view 
         returns(uint256 totalCost) 
     {
@@ -147,7 +147,7 @@ contract Lotto is Ownable, Testable {
         totalCost = pricePer.mul(_numberOfTickets);
     }
 
-    function getBasicLottoInfo(uint256 _lotteryID) public view returns(
+    function getBasicLottoInfo(uint256 _lotteryID) external view returns(
         LottoInfo memory
     )
     {
@@ -156,7 +156,7 @@ contract Lotto is Ownable, Testable {
         ); 
     }
 
-    function getMaxRange() public view returns(uint16) {
+    function getMaxRange() external view returns(uint16) {
         return maxValidRange_;
     }
 
@@ -327,7 +327,7 @@ contract Lotto is Ownable, Testable {
     function batchBuyLottoTicket(
         uint256 _lotteryID,
         uint8 _numberOfTickets,
-        uint16[] memory _chosenNumbersForEachTicket
+        uint16[] calldata _chosenNumbersForEachTicket
     )
         external
         returns(uint256[] memory)
