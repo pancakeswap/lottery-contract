@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lotto.sol": {
-      "lastModificationDate": 1615295979481,
-      "contentHash": "8352069ed112262db83fd606bd27459b",
+      "lastModificationDate": 1615296541006,
+      "contentHash": "cea0535e7058e8ae096ff9100e994676",
       "sourceName": "contracts/Lotto.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -478,8 +478,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LottoNFT.sol": {
-      "lastModificationDate": 1615296135101,
-      "contentHash": "87e19f99b44e6dfe9b57abe293ef0f1e",
+      "lastModificationDate": 1615296574265,
+      "contentHash": "751fb2501d09bc516ee7c575aeee836f",
       "sourceName": "contracts/LottoNFT.sol",
       "solcConfig": {
         "version": "0.7.3",

@@ -36,24 +36,24 @@ describe("Lottery contract", function() {
         // Getting the timer code (abi, bytecode, name)
         timerContract = await ethers.getContractFactory("Timer");
         // Getting the mock rand code (abi, bytecode, name)
-        randContract = await ethers.getContractFactory("Mock_rand_gen");
+        // randContract = await ethers.getContractFactory("Mock_rand_gen");
         // Deploying the instances
         timerInstance = await timerContract.deploy();
         cakeInstance = await cakeContract.deploy(
             lotto.buy.cake,
         );
-        randInstance = await randContract.deploy(
-            owner.address,
-            cakeInstance.address,
-            "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4",
-            100
-        );
+        // randInstance = await randContract.deploy(
+        //     owner.address,
+        //     cakeInstance.address,
+        //     "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4",
+        //     100
+        // );
         lotteryInstance = await lotteryContract.deploy(
             cakeInstance.address,
             timerInstance.address,
             lotto.setup.sizeOfLottery,
             lotto.setup.maxValidRange,
-            randInstance.address
+            owner.address
         );
         lotteryNftInstance = await lotteryNftContract.deploy(
             lottoNFT.newLottoNft.uri,
