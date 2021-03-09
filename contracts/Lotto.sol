@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.7.3;
+pragma solidity >0.6.0;
 pragma experimental ABIEncoderV2;
 // Imported OZ helper contracts
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,14 +9,14 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 // Inherited allowing for ownership of contract
 import "@openzeppelin/contracts/access/Ownable.sol";
 // Allows for intergration with ChainLink VRF
-import "./IVRFConsumerBase.sol";
+import "./RandomNumberGenerator.sol";
 // Interface for Lottery NFT to mint tokens
 import "./ILottoNFT.sol";
 // Allows for time manipulation. Set to 0x address on test/mainnet deploy
 import "./Testable.sol";
 
 // TODO rename to Lottery when done
-contract Lotto is Ownable, IVRFConsumerBase, Testable {
+contract Lotto is Ownable, Testable {
     // Libraries 
     // Counter for lottery IDs
     using Counters for Counters.Counter;
@@ -31,6 +31,9 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     IERC20 internal cake_;
     // Storing of the NFT
     ILottoNFT internal nft_;
+    // Storing of the randomness generator 
+    RandomNumberGenerator internal randomGenerator_;
+    bytes32 internal requestId_;
 
     // Lottery size
     uint8 public sizeOfLottery_;
@@ -84,9 +87,19 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         uint256 pricePaid
     );
 
+    event requestNumbers(uint256 lotteryId, bytes32 requestId);
+
     //-------------------------------------------------------------------------
     // MODIFIERS
     //-------------------------------------------------------------------------
+
+    modifier onlyRandomGenerator() {
+        require(
+            msg.sender == address(randomGenerator_),
+            "Only random generator"
+        );
+        _;
+    }
 
     //-------------------------------------------------------------------------
     // CONSTRUCTOR
@@ -96,13 +109,16 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
         address _cake, 
         address _timer,
         uint8 _sizeOfLotteryNumbers,
-        uint32 _maxValidNumberRange
+        uint32 _maxValidNumberRange,
+        address _randomNumberGenerator
     ) 
         Testable(_timer)
+        public
     {
         cake_ = IERC20(_cake);
         sizeOfLottery_ = _sizeOfLotteryNumbers;
         maxValidRange_ = _maxValidNumberRange;
+        randomGenerator_ = RandomNumberGenerator(_randomNumberGenerator);
     }
 
     function init(address _lotteryNFT) public onlyOwner() {
@@ -162,18 +178,47 @@ contract Lotto is Ownable, IVRFConsumerBase, Testable {
     }
 
 
-    function drawWinningNumbers(uint256 _lottoID, uint32[] memory _winningNumbers) external onlyOwner() {
+    function drawWinningNumbers(uint256 _lotteryId, uint256 _seed) external onlyOwner() {
+        // Checks that the lottery is past the closing block
         require(
-            allLotteries_[_lottoID].lotteryStatus != Status.Completed,
-            "Winning Numbers chosen"
-        );
-        require(
-            allLotteries_[_lottoID].closingBlock <= getCurrentTime(),
+            allLotteries_[_lotteryId].closingBlock <= getCurrentTime(),
             "Cannot set winning numbers during lottery"
         );
-        // TODO ChainLink VRF 
-        allLotteries_[_lottoID].winningNumbers = _winningNumbers;
-        allLotteries_[_lottoID].lotteryStatus = Status.Completed;
+        // Checks lottery numbers have not already been drawn
+        require(
+            allLotteries_[_lotteryId].lotteryStatus != Status.Closed,
+            "Winning Numbers chosen"
+        );
+        // Sets lottery status to closed
+        allLotteries_[_lotteryId].lotteryStatus = Status.Closed;
+        // Requests a random number from the generator
+        requestId_ = randomGenerator_.getRandomNumber(_lotteryId, _seed);
+        // Emits that random number has been requested
+        emit requestNumbers(_lotteryId, requestId_);
+    }
+
+    function numbersDrawn(
+        uint256 _lotteryId,
+        bytes32 _requestId, 
+        uint256 _randomNumber
+    ) 
+        external
+        onlyRandomGenerator()
+    {
+        require(
+            allLotteries_[_lotteryId].lotteryStatus == Status.Closed,
+            "Draw numbers first"
+        );
+        if(requestId_ == _requestId) {
+            allLotteries_[_lotteryId].lotteryStatus = Status.Completed;
+            uint32[] memory winningNumbers = new uint32[](sizeOfLottery_);
+            for (uint256 i = 0; i < sizeOfLottery_; i++) {
+                // TODO format random number to array of size of lottery
+                allLotteries_[_lotteryId].winningNumbers = winningNumbers;
+                
+            }
+
+        }
     }
 
     /**
