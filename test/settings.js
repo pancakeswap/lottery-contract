@@ -56,8 +56,8 @@ const lotto = {
         fifty: {
             cost: "500000000000000000000"
         },
-        sixty_two: {
-            cost: "620000000000000000000"
+        max: {
+            cost: "560000000000000000000"
         }
     },
     draw: {
@@ -85,7 +85,7 @@ const lotto = {
         invalid_claim_time: "Wait till end to claim",
         invalid_claim_draw: "Winning Numbers not chosen yet",
         invalid_claim_owner: "Only the owner can claim",
-        invalid_claim_duplicate: "Ticket has been claimed",
+        invalid_claim_duplicate: "Ticket already claimed",
         invalid_size_update_duplicate: "Cannot set to current size",
         invalid_numbers_range: "Numbers for ticket invalid"
     }
