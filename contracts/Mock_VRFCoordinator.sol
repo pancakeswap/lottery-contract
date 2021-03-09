@@ -4,6 +4,9 @@ pragma solidity ^0.6.0;
 import "@chainlink/contracts/src/v0.6/tests/VRFCoordinatorMock.sol";
 import "./ILottery.sol";
 
+/**
+ * @dev THIS CONTRACT IS FOR TESTING PURPOSES ONLY.
+ */
 contract Mock_VRFCoordinator is VRFCoordinatorMock {
     
     bytes32 internal keyHash;

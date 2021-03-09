@@ -6,17 +6,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 // Inherited allowing for ownership of contract
 import "@openzeppelin/contracts/access/Ownable.sol";
 // Allows for intergration with ChainLink VRF
 import "./RandomNumberGenerator.sol";
 // Interface for Lottery NFT to mint tokens
-import "./ILottoNFT.sol";
+import "./ILotteryNFT.sol";
 // Allows for time manipulation. Set to 0x address on test/mainnet deploy
 import "./Testable.sol";
 
 // TODO rename to Lottery when done
-contract Lotto is Ownable, Testable {
+contract Lottery is Ownable, Initializable, Testable {
     // Libraries 
     // Counter for lottery IDs 
     using Counters for Counters.Counter;
@@ -32,7 +33,7 @@ contract Lotto is Ownable, Testable {
     // Instance of Cake token (collateral currency for lotto)
     IERC20 internal cake_;
     // Storing of the NFT
-    ILottoNFT internal nft_;
+    ILotteryNFT internal nft_;
     // Storing of the randomness generator 
     RandomNumberGenerator internal randomGenerator_;
     // Request ID for random number
@@ -162,13 +163,14 @@ contract Lotto is Ownable, Testable {
         discountForBucketThree_ = _discountForBucketThree;
     }
 
-    function init(
+    function initialize(
         address _lotteryNFT
     ) 
         external 
+        initializer
         onlyOwner() 
     {
-        nft_ = ILottoNFT(_lotteryNFT);
+        nft_ = ILotteryNFT(_lotteryNFT);
     }
 
     //-------------------------------------------------------------------------
@@ -562,15 +564,19 @@ contract Lotto is Ownable, Testable {
         view
         returns(uint256 discountAmount)
     {
+        // Gets the raw cost for the tickets
         uint256 cost = this.costToBuyTickets(lotteryId, _numberOfTickets);
+        // Checks if the amount of tickets falls into the first bucket
         if(_numberOfTickets < bucketOneMax_) {
             discountAmount = cost.mul(discountForBucketOne_).div(100);
         } else if(
             _numberOfTickets >= bucketOneMax_ && 
             _numberOfTickets < bucketTwoMax_
         ) {
+            // Checks if the amount of tickets falls into the seccond bucket
             discountAmount = cost.mul(discountForBucketTwo_).div(100);
         } else {
+            // Checks if the amount of tickets falls into the last bucket
             discountAmount = cost.mul(discountForBucketThree_).div(100);
         }
     }
@@ -581,17 +587,16 @@ contract Lotto is Ownable, Testable {
     )
         internal
         pure
-        returns(uint8)
+        returns(uint8 noOfMatching)
     {
-        uint8 noOfMatching = 0;
-
+        // Loops through all wimming numbers
         for (uint256 i = 0; i < _winningNumbers.length; i++) {
+            // If the winning numbers and user numbers match
             if(_usersNumbers[i] == _winningNumbers[i]) {
+                // The number of matching numbers incrases
                 noOfMatching += 1;
             }
         }
-
-        return noOfMatching;
     }
 
     /**
@@ -617,7 +622,7 @@ contract Lotto is Ownable, Testable {
         // Timesing the percentage one by the pool
         prize = allLotteries_[_lotteryID].prizePoolInCake.mul(perOfPool);
         // Returning the prize divided by 100 (as the prize distribution is scaled)
-        return prize/100;
+        return prize.div(100);
     }
 
     function _split(
@@ -627,11 +632,16 @@ contract Lotto is Ownable, Testable {
         view 
         returns(uint16[] memory) 
     {
+        // Temparary storage for winning numbers
         uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
+        // Loops the size of the number of tickets in the lottery
         for(uint i = 0; i < sizeOfLottery_; i++){
-            bytes32 hash = keccak256(abi.encodePacked(_randomNumber, i));
-            uint256 numberRepresentation = uint256(hash);
-            winningNumbers[i] = uint16(numberRepresentation % maxValidRange_);
+            // Encodes the random number with its position in loop
+            bytes32 hashOfRandom = keccak256(abi.encodePacked(_randomNumber, i));
+            // Casts random number hash into uint256
+            uint256 numberRepresentation = uint256(hashOfRandom);
+            // Sets the winning number position to a uint16 of random hash number
+            winningNumbers[i] = uint16(numberRepresentation.mod(maxValidRange_));
         }
     return winningNumbers;
     }

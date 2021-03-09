@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./ILottery.sol";
 import "./Testable.sol";
 
-contract LottoNFT is ERC1155, Ownable, Testable {
+contract LotteryNFT is ERC1155, Ownable, Testable {
     // Libraries 
     // Safe math
     using SafeMath for uint256;
@@ -19,7 +19,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     // Counter for token IDs
     uint256 internal tokenIdsCount_ = 0;
     // State variables 
-    address internal lottoContract_;
+    address internal lotteryContract_;
     // Storage for ticket information
     struct TicketInfo {
         address owner;
@@ -49,7 +49,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
      */
     modifier onlyLotto() {
         require(
-            msg.sender == lottoContract_,
+            msg.sender == lotteryContract_,
             "Only Lotto can mint"
         );
         _;
@@ -77,7 +77,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
     Testable(_timer)
     {
         // Only Lotto contract will be able to mint new tokens
-        lottoContract_ = _lotto;
+        lotteryContract_ = _lotto;
     }
 
     //-------------------------------------------------------------------------
@@ -191,7 +191,7 @@ contract LottoNFT is ERC1155, Ownable, Testable {
             ticketInfo_[_ticketID].claimed == false,
             "Ticket already claimed"
         );
-        uint256 maxRange = ILottery(lottoContract_).getMaxRange();
+        uint256 maxRange = ILottery(lotteryContract_).getMaxRange();
         for (uint256 i = 0; i < ticketInfo_[_ticketID].numbers.length; i++) {
             if(ticketInfo_[_ticketID].numbers[i] > maxRange) {
                 return false;

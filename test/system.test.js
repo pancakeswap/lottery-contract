@@ -33,10 +33,11 @@ describe("Lottery contract", function() {
         // Creating the active wallets for use
         owner = signers[0];
         buyer = signers[1];
+
         // Getting the lottery code (abi, bytecode, name)
-        lotteryContract = await ethers.getContractFactory("Lotto");
+        lotteryContract = await ethers.getContractFactory("Lottery");
         // Getting the lotteryNFT code (abi, bytecode, name)
-        lotteryNftContract = await ethers.getContractFactory("LottoNFT");
+        lotteryNftContract = await ethers.getContractFactory("LotteryNFT");
         // Getting the lotteryNFT code (abi, bytecode, name)
         mock_erc20Contract = await ethers.getContractFactory("Mock_erc20");
         // Getting the timer code (abi, bytecode, name)
@@ -44,6 +45,7 @@ describe("Lottery contract", function() {
         // Getting the ChainLink contracts code (abi, bytecode, name)
         randGenContract = await ethers.getContractFactory("RandomNumberGenerator");
         mock_vrfCoordContract = await ethers.getContractFactory("Mock_VRFCoordinator");
+
         // Deploying the instances
         timerInstance = await timerContract.deploy();
         cakeInstance = await mock_erc20Contract.deploy(
@@ -80,7 +82,7 @@ describe("Lottery contract", function() {
             lotteryInstance.address,
             timerInstance.address
         );
-        await lotteryInstance.init(
+        await lotteryInstance.initialize(
             lotteryNftInstance.address
         );
         // Making sure the lottery has some cake
@@ -411,7 +413,7 @@ describe("Lottery contract", function() {
         /**
          * Tests the batch buying of one thousand token
          */
-        it.only("Batch buying max (62) tickets", async function() {
+        it("Batch buying max (62) tickets", async function() {
             // Getting the price to buy
             let price = await lotteryInstance.costToBuyTickets(
                 1,
@@ -1374,8 +1376,6 @@ describe("Lottery contract", function() {
             let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
-
-
         });
 
         it("Batch claiming winning numbers (multiple match)", async function() {
@@ -1518,9 +1518,240 @@ describe("Lottery contract", function() {
                 )
             ).to.be.revertedWith(lotto.errors.invalid_admin);
         });
+
+        it("Update buckets", async function() {
+            // Getting the size of the lottery
+            let bucketOne = await lotteryInstance.bucketOneMax_();
+            let bucketTwo = await lotteryInstance.bucketTwoMax_();
+            let disBucketOne = await lotteryInstance.discountForBucketOne_();
+            let disBucketTwo = await lotteryInstance.discountForBucketTwo_();
+            let disBucketThree = await lotteryInstance.discountForBucketThree_();
+            // Updating the size of the lottery
+            await lotteryInstance.connect(owner).updateBuckets(
+                lotto.update.bucket.one,
+                lotto.update.bucket.two,
+                lotto.update.bucketDiscount.one,
+                lotto.update.bucketDiscount.two,
+                lotto.update.bucketDiscount.three
+            );
+            // Getting the size of the lottery after the update
+            let bucketOneAfter = await lotteryInstance.bucketOneMax_();
+            let bucketTwoAfter = await lotteryInstance.bucketTwoMax_();
+            let disBucketOneAfter = await lotteryInstance.discountForBucketOne_();
+            let disBucketTwoAfter = await lotteryInstance.discountForBucketTwo_();
+            let disBucketThreeAfter = await lotteryInstance.discountForBucketThree_();
+            // Testing
+            assert.equal(
+                bucketOne.toString(),
+                lotto.setup.bucket.one,
+                "Bucket one incorrect"
+            );
+            assert.equal(
+                bucketOneAfter.toString(),
+                lotto.update.bucket.one,
+                "Bucket one incorrect"
+            );
+            assert.equal(
+                bucketTwo.toString(),
+                lotto.setup.bucket.two,
+                "Bucket two incorrect"
+            );
+            assert.equal(
+                bucketTwoAfter.toString(),
+                lotto.update.bucket.two,
+                "Bucket two incorrect"
+            );
+            assert.equal(
+                disBucketOne.toString(),
+                lotto.setup.bucketDiscount.one,
+                "Bucket one discount incorrect"
+            );
+            assert.equal(
+                disBucketOneAfter.toString(),
+                lotto.update.bucketDiscount.one,
+                "Bucket one discount incorrect"
+            );
+            assert.equal(
+                disBucketTwo.toString(),
+                lotto.setup.bucketDiscount.two,
+                "Bucket two discount incorrect"
+            );
+            assert.equal(
+                disBucketTwoAfter.toString(),
+                lotto.update.bucketDiscount.two,
+                "Bucket two discount incorrect"
+            );
+            assert.equal(
+                disBucketThree.toString(),
+                lotto.setup.bucketDiscount.three,
+                "Bucket three discount incorrect"
+            );
+            assert.equal(
+                disBucketThreeAfter.toString(),
+                lotto.update.bucketDiscount.three,
+                "Bucket three discount incorrect"
+            );
+        });
+
+        it("Invalid bucket update (non owner)", async function() {
+            await expect(
+                lotteryInstance.connect(buyer).updateBuckets(
+                    lotto.update.bucket.one,
+                    lotto.update.bucket.two,
+                    lotto.update.bucketDiscount.one,
+                    lotto.update.bucketDiscount.two,
+                    lotto.update.bucketDiscount.three
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_admin);
+        });
+
+        it("Invalid bucket update (max 0)", async function() {
+            await expect(
+                lotteryInstance.connect(owner).updateBuckets(
+                    lotto.errorData.bucket,
+                    lotto.update.bucket.two,
+                    lotto.update.bucketDiscount.one,
+                    lotto.update.bucketDiscount.two,
+                    lotto.update.bucketDiscount.three
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_bucket_range);
+            await expect(
+                lotteryInstance.connect(owner).updateBuckets(
+                    lotto.update.bucket.one,
+                    lotto.errorData.bucket,
+                    lotto.update.bucketDiscount.one,
+                    lotto.update.bucketDiscount.two,
+                    lotto.update.bucketDiscount.three
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_bucket_range);
+        });
+
+        it("Invalid bucket update (discount increase)", async function() {
+            await expect(
+                lotteryInstance.connect(owner).updateBuckets(
+                    lotto.update.bucket.one,
+                    lotto.update.bucket.two,
+                    lotto.update.bucketDiscount.two,
+                    lotto.update.bucketDiscount.one,
+                    lotto.update.bucketDiscount.three
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_bucket_discount);
+            await expect(
+                lotteryInstance.connect(owner).updateBuckets(
+                    lotto.update.bucket.one,
+                    lotto.update.bucket.two,
+                    lotto.update.bucketDiscount.one,
+                    lotto.update.bucketDiscount.three,
+                    lotto.update.bucketDiscount.two,
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_bucket_discount);
+        });
+
+        it("Withdraw excess cake", async function() {
+            let ownerCakeBalance = await cakeInstance.balanceOf(owner.address);
+            let lotteryCakeBalance = await cakeInstance.balanceOf(lotteryInstance.address);
+            await lotteryInstance.connect(owner).withdrawCake();
+            let ownerCakeBalanceAfter = await cakeInstance.balanceOf(owner.address);
+            let lotteryCakeBalanceAfter = await cakeInstance.balanceOf(lotteryInstance.address);
+            // Tests
+            assert.notEqual(
+                ownerCakeBalance.toString(),
+                ownerCakeBalanceAfter.toString(),
+                "Owner cake balance did not change"
+            );
+            assert.notEqual(
+                lotteryCakeBalance.toString(),
+                lotteryCakeBalanceAfter.toString(),
+                "Lottery balance did not change"
+            );
+            assert.equal(
+                lotteryCakeBalanceAfter.toString(),
+                0,
+                "Lottery has not been drained"
+            );
+        });
+
+        it("Invalid withdraw excess cake (non owner)", async function() {
+            await expect(
+                lotteryInstance.connect(buyer).withdrawCake()
+            ).to.be.revertedWith(lotto.errors.invalid_admin);
+        });
     });
 
     describe("View function tests", function() {
+        it("Get Lotto discount", async function() {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+            );
+
+            let pricesBucketOne = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                10
+            );
+            let pricesBucketTwo = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                35
+            );
+            let pricesBucketThree = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                51
+            );
+            assert.equal(
+                pricesBucketOne[0].toString(),
+                lotto.discount.ten.cost,
+                "Cost for buy of 10 incorrect"
+            );
+            assert.equal(
+                pricesBucketOne[1].toString(),
+                lotto.discount.ten.discount,
+                "Discount for buy of 10 incorrect"
+            );
+            assert.equal(
+                pricesBucketOne[2].toString(),
+                lotto.discount.ten.discountCost,
+                "Discount cost for buy of 10 incorrect"
+            );
+            assert.equal(
+                pricesBucketTwo[0].toString(),
+                lotto.discount.thirty_five.cost,
+                "Cost for buy of 35 incorrect"
+            );
+            assert.equal(
+                pricesBucketTwo[1].toString(),
+                lotto.discount.thirty_five.discount,
+                "Discount for buy of 35 incorrect"
+            );
+            assert.equal(
+                pricesBucketTwo[2].toString(),
+                lotto.discount.thirty_five.discountCost,
+                "Discount cost for buy of 35 incorrect"
+            );
+            assert.equal(
+                pricesBucketThree[0].toString(),
+                lotto.discount.fifty_one.cost,
+                "Cost for buy of 55 incorrect"
+            );
+            assert.equal(
+                pricesBucketThree[1].toString(),
+                lotto.discount.fifty_one.discount,
+                "Discount for buy of 55 incorrect"
+            );
+            assert.equal(
+                pricesBucketThree[2].toString(),
+                lotto.discount.fifty_one.discountCost,
+                "Discount cost for buy of 55 incorrect"
+            );
+        });
         it("Get Lotto Info", async function() {
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();

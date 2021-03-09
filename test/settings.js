@@ -17,7 +17,16 @@ const lotto = {
     },
     update: {
         sizeOfLottery: 5,
-        maxValidRange: 100
+        maxValidRange: 100,
+        bucket: {
+            one: 30,
+            two: 50
+        },
+        bucketDiscount: {
+            one: 1,
+            two: 5,
+            three: 10
+        }
     },
     newLotto: {
         distribution: [5, 10, 35, 50],
@@ -60,6 +69,23 @@ const lotto = {
             cost: "560000000000000000000"
         }
     },
+    discount: {
+        ten: {
+            cost: "100000000000000000000",
+            discount: "5000000000000000000",
+            discountCost: "95000000000000000000"
+        },
+        thirty_five: {
+            cost: "350000000000000000000",
+            discount: "35000000000000000000",
+            discountCost: "315000000000000000000"
+        },
+        fifty_one: {
+            cost: "510000000000000000000",
+            discount: "76500000000000000000",
+            discountCost: "433500000000000000000"
+        },
+    },
     draw: {
         random: ethers.utils.parseUnits("71812290232383789158325313353218754072886144180308695307717334628590412940628", 0)
     },
@@ -69,7 +95,8 @@ const lotto = {
         prize: ethers.utils.parseUnits("0", 18),
         cost: ethers.utils.parseUnits("0", 18),
         startTime: ethers.utils.parseUnits("0", 18),
-        ticketNumbers: [22, 15, 35, 40]
+        ticketNumbers: [22, 15, 35, 40],
+        bucket: 0
     },
     errors: {
         invalid_admin: "Ownable: caller is not the owner",
@@ -87,7 +114,9 @@ const lotto = {
         invalid_claim_owner: "Only the owner can claim",
         invalid_claim_duplicate: "Ticket already claimed",
         invalid_size_update_duplicate: "Cannot set to current size",
-        invalid_numbers_range: "Numbers for ticket invalid"
+        invalid_numbers_range: "Numbers for ticket invalid",
+        invalid_bucket_range: "Bucket range cannot be 0",
+        invalid_bucket_discount: "Discounts must increase"
     }
 }
 const lottoNFT = {

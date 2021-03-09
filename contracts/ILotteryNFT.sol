@@ -2,7 +2,7 @@
 pragma solidity >= 0.6.0 < 0.8.0;
 pragma experimental ABIEncoderV2;
 
-interface ILottoNFT {
+interface ILotteryNFT {
 
     //-------------------------------------------------------------------------
     // VIEW FUNCTIONS
