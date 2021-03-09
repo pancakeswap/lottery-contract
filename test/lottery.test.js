@@ -8,16 +8,22 @@ const {
 } = require("./settings.js");
 
 describe("Lottery contract", function() {
+    let mock_erc20Contract;
     // Creating the instance and contract info for the lottery contract
     let lotteryInstance, lotteryContract;
     // Creating the instance and contract info for the lottery NFT contract
     let lotteryNftInstance, lotteryNftContract;
     // Creating the instance and contract info for the cake token contract
-    let cakeInstance, cakeContract;
+    let cakeInstance;
     // Creating the instance and contract info for the timer contract
     let timerInstance, timerContract;
     // Creating the instance and contract info for the mock rand gen
-    let randInstance, randContract;
+    let randGenInstance, randGenContract;
+    // Creating the instance and contract of all the contracts needed to mock
+    // the ChainLink contract ecosystem. 
+    let linkInstance;
+    let mock_vrfCoordInstance, mock_vrfCoordContract;
+    
     // Creating the users
     let owner, buyer;
 
@@ -32,28 +38,42 @@ describe("Lottery contract", function() {
         // Getting the lotteryNFT code (abi, bytecode, name)
         lotteryNftContract = await ethers.getContractFactory("LottoNFT");
         // Getting the lotteryNFT code (abi, bytecode, name)
-        cakeContract = await ethers.getContractFactory("Mock_erc20");
+        mock_erc20Contract = await ethers.getContractFactory("Mock_erc20");
         // Getting the timer code (abi, bytecode, name)
         timerContract = await ethers.getContractFactory("Timer");
-        // Getting the mock rand code (abi, bytecode, name)
-        // randContract = await ethers.getContractFactory("Mock_rand_gen");
+        // Getting the ChainLink contracts code (abi, bytecode, name)
+        randGenContract = await ethers.getContractFactory("RandomNumberGenerator");
+        mock_vrfCoordContract = await ethers.getContractFactory("Mock_VRFCoordinator");
         // Deploying the instances
         timerInstance = await timerContract.deploy();
-        cakeInstance = await cakeContract.deploy(
+        cakeInstance = await mock_erc20Contract.deploy(
             lotto.buy.cake,
         );
-        // randInstance = await randContract.deploy(
-        //     owner.address,
-        //     cakeInstance.address,
-        //     "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4",
-        //     100
-        // );
+        linkInstance = await mock_erc20Contract.deploy(
+            lotto.buy.cake,
+        );
+        mock_vrfCoordInstance = await mock_vrfCoordContract.deploy(
+            linkInstance.address,
+            lotto.chainLink.keyHash,
+            lotto.chainLink.fee
+        );
+        randGenInstance = await randGenContract.deploy(
+            mock_vrfCoordInstance.address,
+            linkInstance.address,
+            lotto.chainLink.keyHash,
+            lotto.chainLink.fee
+        );
         lotteryInstance = await lotteryContract.deploy(
             cakeInstance.address,
             timerInstance.address,
             lotto.setup.sizeOfLottery,
             lotto.setup.maxValidRange,
-            owner.address
+            randGenInstance.address,
+            lotto.setup.bucket.one,
+            lotto.setup.bucket.two,
+            lotto.setup.bucketDiscount.one,
+            lotto.setup.bucketDiscount.two,
+            lotto.setup.bucketDiscount.three
         );
         lotteryNftInstance = await lotteryNftContract.deploy(
             lottoNFT.newLottoNft.uri,
@@ -67,6 +87,11 @@ describe("Lottery contract", function() {
         await cakeInstance.mint(
             lotteryInstance.address,
             lotto.newLotto.prize
+        );
+        // Sending link to lottery
+        await linkInstance.transfer(
+            randGenInstance.address,
+            lotto.buy.cake
         );
     });
 
@@ -303,7 +328,7 @@ describe("Lottery contract", function() {
                 price
             );
             // Batch buying tokens
-            await lotteryInstance.connect(owner).batchBuyLottoTicket(
+            await lotteryInstance.batchBuyLottoTicket(
                 1,
                 1,
                 ticketNumbers
@@ -390,11 +415,11 @@ describe("Lottery contract", function() {
             // Getting the price to buy
             let price = await lotteryInstance.costToBuyTickets(
                 1,
-                62
+                55
             );
             // Generating chosen numbers for buy
             let ticketNumbers = generateLottoNumbers({
-                numberOfTickets: 62, 
+                numberOfTickets: 55, 
                 lottoSize: lotto.setup.sizeOfLottery,
                 maxRange: lotto.setup.maxValidRange
             });
@@ -406,7 +431,7 @@ describe("Lottery contract", function() {
             // Batch buying tokens
             await lotteryInstance.connect(owner).batchBuyLottoTicket(
                 1,
-                62,
+                55,
                 ticketNumbers
             );
             // Testing results
@@ -540,16 +565,21 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Drawing the numbers
-            await lotteryInstance.connect(owner).drawWinningNumbers(
+            let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
                 1234
+            )).wait();
+            // Getting the request ID out of events
+            let requestId = tx.events[0].args.requestId.toString();
+            // Mocking the VRF Coordinator contract for random request fulfilment 
+            await mock_vrfCoordInstance.connect(owner).callBackWithRandomness(
+                requestId,
+                lotto.draw.random,
+                randGenInstance.address
             );
-            await randInstance.connect(owner).fulfillRandomness(
-                1,
-                lotto.draw.random
-            );
+            // Getting info after call
             let lotteryInfoAfter = await lotteryInstance.getBasicLottoInfo(1);
-
+            // Testing
             assert.equal(
                 lotteryInfoBefore.winningNumbers.toString(),
                 lotto.newLotto.win.blankWinningNumbers,
@@ -557,7 +587,7 @@ describe("Lottery contract", function() {
             );
             assert.equal(
                 lotteryInfoAfter.winningNumbers.toString(),
-                lotto.newLotto.win.simpleWinningNumbers,
+                lotto.newLotto.win.winningNumbers,
                 "Winning numbers incorrect after"
             );
         });
@@ -577,7 +607,7 @@ describe("Lottery contract", function() {
             await expect(
                 lotteryInstance.connect(buyer).drawWinningNumbers(
                     1,
-                    [1,2,3,4]
+                    1234
                 )
             ).to.be.revertedWith(lotto.errors.invalid_admin);
         });
@@ -596,13 +626,13 @@ describe("Lottery contract", function() {
             // Drawing the numbers
             await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
-                [1,2,3,4]
+                1234
             );
             // Drawing the numbers again
             await expect(
                 lotteryInstance.connect(owner).drawWinningNumbers(
                     1,
-                    [1,2,3,4]
+                    1234
                 )
             ).to.be.revertedWith(lotto.errors.invalid_draw_repeat);
         });
@@ -614,7 +644,7 @@ describe("Lottery contract", function() {
             await expect(
                 lotteryInstance.connect(owner).drawWinningNumbers(
                     1,
-                    [1,2,3,4]
+                    1234
                 )
             ).to.be.revertedWith(lotto.errors.invalid_draw_time);
         });
@@ -663,38 +693,64 @@ describe("Lottery contract", function() {
                 50,
                 ticketNumbers
             );
-            // Setting current time so that drawing is correct
-            // Getting the current block timestamp
-            currentTime = await lotteryInstance.getCurrentTime();
-            // Converting to a BigNumber for manipulation 
-            timeStamp = new BigNumber(currentTime.toString());
-            // Getting the timestamp for invalid time for buying
-            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
-            // Setting the time forward 
-            await lotteryInstance.setCurrentTime(futureTime.toString());
+            let buyerCakeBalanceAfter = await cakeInstance.balanceOf(buyer.address);
+            console.log(buyerCakeBalanceAfter.toString())
         });
         /**
          * Testing that claiming numbers (4 match) changes the users balance
          * correctly. 
          */
-        it("Claiming winning numbers (4 (all) match)", async function() {
-            // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
-            // Getting a valid tickets number
-            let winningNumbers = await lotteryNftInstance.getTicketNumbers(
-                userTicketIds[25].toString()
-            );
-            // Drawing numbers
-            await lotteryInstance.connect(owner).drawWinningNumbers(
+        it.only("Claiming winning numbers (4 (all) match)", async function() {
+            // Getting the price to buy
+            let price = await lotteryInstance.costToBuyTickets(
                 1,
-                winningNumbers
+                1
             );
-            let buyerCakeBalanceBefore = await cakeInstance.balanceOf(buyer.address);
-
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(owner).transfer(
+                buyer.address,
+                price
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                price
+            );
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                1,
+                lotto.newLotto.win.winningNumbersArr
+            );
+            // Setting current time so that drawing is correct
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             let timeStamp = new BigNumber(currentTime.toString());
+            // Getting the timestamp for invalid time for buying
+            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Setting the time forward 
+            await lotteryInstance.setCurrentTime(futureTime.toString());
+            // Getting all users bought tickets
+            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            // Drawing the numbers
+            let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
+                1,
+                1234
+            )).wait();
+            // Getting the request ID out of events
+            let requestId = tx.events[0].args.requestId.toString();
+            // Mocking the VRF Coordinator contract for random request fulfilment 
+            await mock_vrfCoordInstance.connect(owner).callBackWithRandomness(
+                requestId,
+                lotto.draw.random,
+                randGenInstance.address
+            );
+            let buyerCakeBalanceBefore = await cakeInstance.balanceOf(buyer.address);
+
+            // Getting the current block timestamp
+            currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            timeStamp = new BigNumber(currentTime.toString());
             let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
@@ -704,6 +760,8 @@ describe("Lottery contract", function() {
                 userTicketIds[25].toString()
             );
             let buyerCakeBalanceAfter = await cakeInstance.balanceOf(buyer.address);
+            console.log(buyerCakeBalanceBefore.toString())
+            console.log(buyerCakeBalanceAfter.toString())
             // Tests
             assert.equal(
                 buyerCakeBalanceBefore.toString(),
@@ -1312,17 +1370,17 @@ describe("Lottery contract", function() {
                 "Invalid cost per token"
             );
             assert.equal(
-                lottoInfo.startingBlock.toString(),
+                lottoInfo.startingTimestamp.toString(),
                 timeStamp.toString(),
                 "Invalid starting time"
             );
             assert.equal(
-                lottoInfo.closingBlock.toString(),
+                lottoInfo.closingTimestamp.toString(),
                 timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
                 "Invalid starting time"
             );
             assert.equal(
-                lottoInfo.endBlock.toString(),
+                lottoInfo.endTimestamp.toString(),
                 timeStamp.plus(lotto.newLotto.endIncrease).toString(),
                 "Invalid starting time"
             );
