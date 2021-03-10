@@ -1794,6 +1794,7 @@ describe("Lottery contract", function() {
                 "Discount cost for buy of 55 incorrect"
             );
         });
+
         it("Get Lotto Info", async function() {
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();
@@ -1841,6 +1842,364 @@ describe("Lottery contract", function() {
                 timeStamp.plus(lotto.newLotto.endIncrease).toString(),
                 "Invalid starting time"
             );
+        });
+
+        it.only("Get User Tickets", async function() {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+            );
+            // Buying tickets
+            // Getting the price to buy
+            let prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            let userInfo = await lotteryNftInstance.getUserTickets(
+                1,
+                buyer.address
+            );
+            console.log(userInfo)
         });
     });
 });
