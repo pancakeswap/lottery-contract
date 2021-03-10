@@ -108,7 +108,7 @@ contract Lottery is Ownable, Initializable, Testable {
 
     event UpdatedMaxRange(
         address admin, 
-        uint8 newMaxRange
+        uint16 newMaxRange
     );
 
     event UpdatedBuckets(
@@ -445,7 +445,7 @@ contract Lottery is Ownable, Initializable, Testable {
     function withdrawCake(uint256 _amount) external onlyOwner() {
         cake_.transfer(
             msg.sender, 
-            cake_.balanceOf(_amount)
+            _amount
         );
     }
 

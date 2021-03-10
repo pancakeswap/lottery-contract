@@ -29,8 +29,8 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
     }
     // Token ID => Token information 
     mapping(uint256 => TicketInfo) internal ticketInfo_;
-    // User address => Ticket IDs
-    mapping(address => uint256[]) internal userTickets_;
+    // User address => Lottery ID => Ticket IDs
+    mapping(address => mapping(uint256 => uint256[])) internal userTickets_;
 
     //-------------------------------------------------------------------------
     // EVENTS
@@ -126,13 +126,14 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
     }
 
     function getUserTickets(
+        uint256 _lotteryId,
         address _user
     ) 
         external 
         view 
         returns(uint256[] memory) 
     {
-        return userTickets_[_user];
+        return userTickets_[_user][_lotteryId];
     }
 
     //-------------------------------------------------------------------------
@@ -177,7 +178,7 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
                 false,
                 _lottoId
             );
-            userTickets_[_to].push(tokenIdsCount_);
+            userTickets_[_to][_lottoId].push(tokenIdsCount_);
         }
         // Minting the batch of tokens
         _mintBatch(
