@@ -4,4 +4,6 @@ artifacts
 node_modules
 to_nuke
 cache
+./cache
+cache/
 .env

@@ -101,6 +101,25 @@ contract Lottery is Ownable, Initializable, Testable {
 
     event RequestNumbers(uint256 lotteryId, bytes32 requestId);
 
+    event UpdatedSizeOfLottery(
+        address admin, 
+        uint8 newLotterySize
+    );
+
+    event UpdatedMaxRange(
+        address admin, 
+        uint8 newMaxRange
+    );
+
+    event UpdatedBuckets(
+        address admin, 
+        uint8 bucketOneMax,
+        uint8 bucketTwoMax,
+        uint8 discountForBucketOne,
+        uint8 discountForBucketTwo,
+        uint8 discountForBucketThree
+    );
+
     //-------------------------------------------------------------------------
     // MODIFIERS
     //-------------------------------------------------------------------------
@@ -237,6 +256,11 @@ contract Lottery is Ownable, Initializable, Testable {
             "Cannot set to current size"
         );
         sizeOfLottery_ = _newSize;
+
+        emit UpdatedSizeOfLottery(
+            msg.sender, 
+            _newSize
+        );
     }
 
     function updateMaxRange(uint16 _newMaxRange) external onlyOwner() {
@@ -245,6 +269,11 @@ contract Lottery is Ownable, Initializable, Testable {
             "Cannot set to current size"
         );
         maxValidRange_ = _newMaxRange;
+
+        emit UpdatedMaxRange(
+            msg.sender, 
+            _newMaxRange
+        );
     }
 
     function updateBuckets(
@@ -272,6 +301,15 @@ contract Lottery is Ownable, Initializable, Testable {
         discountForBucketOne_ = _discountForBucketOne;
         discountForBucketTwo_ = _discountForBucketTwo;
         discountForBucketThree_ = _discountForBucketThree;
+
+        emit UpdatedBuckets(
+            msg.sender,
+            _bucketOneMax,
+            _bucketTwoMax,
+            _discountForBucketOne,
+            _discountForBucketTwo,
+            _discountForBucketThree
+        );
     }
 
     function drawWinningNumbers(
@@ -404,10 +442,10 @@ contract Lottery is Ownable, Initializable, Testable {
         );
     }
 
-    function withdrawCake() external onlyOwner() {
+    function withdrawCake(uint256 _amount) external onlyOwner() {
         cake_.transfer(
             msg.sender, 
-            cake_.balanceOf(address(this))
+            cake_.balanceOf(_amount)
         );
     }
 
