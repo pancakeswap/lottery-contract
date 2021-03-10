@@ -698,7 +698,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -776,7 +776,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -855,7 +855,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -935,7 +935,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1016,7 +1016,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1071,7 +1071,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1099,7 +1099,7 @@ describe("Lottery contract", function() {
          */
         it("Invalid claim (winning numbers not chosen)", async function() {
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
@@ -1129,7 +1129,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1172,7 +1172,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1240,7 +1240,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1314,7 +1314,7 @@ describe("Lottery contract", function() {
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureTime.toString());
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(2, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1339,7 +1339,7 @@ describe("Lottery contract", function() {
             await expect(
                 lotteryInstance.connect(buyer).claimReward(
                     1,
-                    userTicketIds[50].toString()
+                    userTicketIds[0].toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_claim_lottery);
         });
@@ -1421,7 +1421,7 @@ describe("Lottery contract", function() {
 
         it("Batch claiming winning numbers (multiple match)", async function() {
             // Getting all users bought tickets
-            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            let userTicketIds = await lotteryNftInstance.getUserTickets(1, buyer.address);
             // Drawing the numbers
             let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
                 1,
@@ -1691,7 +1691,7 @@ describe("Lottery contract", function() {
         it("Withdraw excess cake", async function() {
             let ownerCakeBalance = await cakeInstance.balanceOf(owner.address);
             let lotteryCakeBalance = await cakeInstance.balanceOf(lotteryInstance.address);
-            await lotteryInstance.connect(owner).withdrawCake();
+            await lotteryInstance.connect(owner).withdrawCake(lotteryCakeBalance);
             let ownerCakeBalanceAfter = await cakeInstance.balanceOf(owner.address);
             let lotteryCakeBalanceAfter = await cakeInstance.balanceOf(lotteryInstance.address);
             // Tests
@@ -1713,8 +1713,9 @@ describe("Lottery contract", function() {
         });
 
         it("Invalid withdraw excess cake (non owner)", async function() {
+            let lotteryCakeBalance = await cakeInstance.balanceOf(lotteryInstance.address);
             await expect(
-                lotteryInstance.connect(buyer).withdrawCake()
+                lotteryInstance.connect(buyer).withdrawCake(lotteryCakeBalance)
             ).to.be.revertedWith(lotto.errors.invalid_admin);
         });
     });
