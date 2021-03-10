@@ -11,18 +11,21 @@ contract RandomNumberGenerator is VRFConsumerBase {
     address internal requester;
     uint256 public randomResult;
     uint256 public currentLotteryId;
+
+    address public lottery;
     
-    /**
-     * Constructor inherits VRFConsumerBase
-     * 
-     * Network: Kovan
-     * Chainlink VRF Coordinator address: 0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9
-     * LINK token address:                0xa36085F69e2889c224210F603D836748e7dC0088
-     * Key Hash: 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4
-     */
+    modifier onlyLottery() {
+        require(
+            msg.sender == lottery,
+            "Only Lottery can call function"
+        );
+        _;
+    }
+
     constructor(
         address _vrfCoordinator,
         address _linkToken,
+        address _lottery,
         bytes32 _keyHash,
         uint256 _fee
     ) 
@@ -33,6 +36,7 @@ contract RandomNumberGenerator is VRFConsumerBase {
     {
         keyHash = _keyHash;
         fee = _fee; 
+        lottery = _lottery;
     }
     
     /** 
@@ -43,6 +47,7 @@ contract RandomNumberGenerator is VRFConsumerBase {
         uint256 userProvidedSeed
     ) 
         public 
+        onlyLottery()
         returns (bytes32 requestId) 
     {
         require(keyHash != bytes32(0), "Must have valid key hash");

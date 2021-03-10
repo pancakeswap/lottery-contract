@@ -25,6 +25,7 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
         address owner;
         uint16[] numbers;
         bool claimed;
+        uint256 lotteryId;
     }
     // Token ID => Token information 
     mapping(uint256 => TicketInfo) internal ticketInfo_;
@@ -165,7 +166,8 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
             ticketInfo_[tokenIdsCount_] = TicketInfo(
                 _to,
                 numbers,
-                false
+                false,
+                _lottoID
             );
             userTickets_[_to].push(tokenIdsCount_);
         }
@@ -186,10 +188,14 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
         return tokenIds;
     }
 
-    function claimTicket(uint256 _ticketID) external onlyLotto() returns(bool) {
+    function claimTicket(uint256 _ticketID, uint256 _lotteryId) external onlyLotto() returns(bool) {
         require(
             ticketInfo_[_ticketID].claimed == false,
             "Ticket already claimed"
+        );
+        require(
+            ticketInfo_[_ticketID].lotteryId == _lotteryId,
+            "Ticket not for this lottery"
         );
         uint256 maxRange = ILottery(lotteryContract_).getMaxRange();
         for (uint256 i = 0; i < ticketInfo_[_ticketID].numbers.length; i++) {

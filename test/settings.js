@@ -113,6 +113,7 @@ const lotto = {
         invalid_claim_draw: "Winning Numbers not chosen yet",
         invalid_claim_owner: "Only the owner can claim",
         invalid_claim_duplicate: "Ticket already claimed",
+        invalid_claim_lottery: "Ticket not for this lottery",
         invalid_size_update_duplicate: "Cannot set to current size",
         invalid_numbers_range: "Numbers for ticket invalid",
         invalid_bucket_range: "Bucket range cannot be 0",
