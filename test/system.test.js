@@ -59,23 +59,23 @@ describe("Lottery contract", function() {
             lotto.chainLink.keyHash,
             lotto.chainLink.fee
         );
-        randGenInstance = await randGenContract.deploy(
-            mock_vrfCoordInstance.address,
-            linkInstance.address,
-            lotto.chainLink.keyHash,
-            lotto.chainLink.fee
-        );
         lotteryInstance = await lotteryContract.deploy(
             cakeInstance.address,
             timerInstance.address,
             lotto.setup.sizeOfLottery,
             lotto.setup.maxValidRange,
-            randGenInstance.address,
             lotto.setup.bucket.one,
             lotto.setup.bucket.two,
             lotto.setup.bucketDiscount.one,
             lotto.setup.bucketDiscount.two,
             lotto.setup.bucketDiscount.three
+        );
+        randGenInstance = await randGenContract.deploy(
+            mock_vrfCoordInstance.address,
+            linkInstance.address,
+            lotteryInstance.address,
+            lotto.chainLink.keyHash,
+            lotto.chainLink.fee
         );
         lotteryNftInstance = await lotteryNftContract.deploy(
             lottoNFT.newLottoNft.uri,
@@ -83,7 +83,8 @@ describe("Lottery contract", function() {
             timerInstance.address
         );
         await lotteryInstance.initialize(
-            lotteryNftInstance.address
+            lotteryNftInstance.address,
+            randGenInstance.address
         );
         // Making sure the lottery has some cake
         await cakeInstance.mint(
@@ -378,7 +379,7 @@ describe("Lottery contract", function() {
             );
         });
         /**
-         * Tests the batch buying of one hundred token
+         * Tests the batch buying of fifty token
          */
         it("Batch buying 50 tickets", async function() {
             // Getting the price to buy
@@ -408,40 +409,6 @@ describe("Lottery contract", function() {
                 price.toString(),
                 lotto.buy.fifty.cost,
                 "Incorrect cost for batch buy of 50"
-            );
-        }); 
-        /**
-         * Tests the batch buying of one thousand token
-         */
-        it("Batch buying max (62) tickets", async function() {
-            // Getting the price to buy
-            let price = await lotteryInstance.costToBuyTickets(
-                1,
-                56
-            );
-            // Generating chosen numbers for buy
-            let ticketNumbers = generateLottoNumbers({
-                numberOfTickets: 56, 
-                lottoSize: lotto.setup.sizeOfLottery,
-                maxRange: lotto.setup.maxValidRange
-            });
-            // Approving lotto to spend cost
-            await cakeInstance.connect(owner).approve(
-                lotteryInstance.address,
-                price
-            );
-            // Batch buying tokens
-            await lotteryInstance.connect(owner).batchBuyLottoTicket(
-                1,
-                56,
-                ticketNumbers
-            );
-            // Testing results
-            // TODO get user balances
-            assert.equal(
-                price.toString(),
-                lotto.buy.max.cost,
-                "Incorrect cost for max batch buy of 75"
             );
         }); 
         /**
@@ -1301,6 +1268,80 @@ describe("Lottery contract", function() {
                     userTicketIds[50].toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_numbers_range);
+        });
+
+        it("Invalid claim (ticket for different lottery)", async function() {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
+                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+            );
+            // Getting the price to buy
+            let prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                2,
+                1
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(owner).transfer(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                2,
+                1,
+                lotto.newLotto.win.winningNumbersArr
+            );
+            // Setting current time so that drawing is correct
+            // Getting the current block timestamp
+            currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            timeStamp = new BigNumber(currentTime.toString());
+            // Getting the timestamp for invalid time for buying
+            let futureTime = timeStamp.plus(lotto.newLotto.closeIncrease);
+            // Setting the time forward 
+            await lotteryInstance.setCurrentTime(futureTime.toString());
+            // Getting all users bought tickets
+            let userTicketIds = await lotteryNftInstance.getUserTickets(buyer.address);
+            // Drawing the numbers
+            let tx = await (await lotteryInstance.connect(owner).drawWinningNumbers(
+                1,
+                1234
+            )).wait();
+            // Getting the request ID out of events
+            let requestId = tx.events[0].args.requestId.toString();
+            // Mocking the VRF Coordinator contract for random request fulfilment 
+            await mock_vrfCoordInstance.connect(owner).callBackWithRandomness(
+                requestId,
+                lotto.draw.random,
+                randGenInstance.address
+            );
+            // Getting the current block timestamp
+            currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            timeStamp = new BigNumber(currentTime.toString());
+            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            // Setting the time forward 
+            await lotteryInstance.setCurrentTime(futureEndTime.toString());
+            // Claiming winnings with invalid numbers
+            await expect(
+                lotteryInstance.connect(buyer).claimReward(
+                    1,
+                    userTicketIds[50].toString()
+                )
+            ).to.be.revertedWith(lotto.errors.invalid_claim_lottery);
         });
     });
 

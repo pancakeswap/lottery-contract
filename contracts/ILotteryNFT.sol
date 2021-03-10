@@ -43,5 +43,5 @@ interface ILotteryNFT {
         external
         returns(uint256[] memory);
 
-    function claimTicket(uint256 _ticketID) external returns(bool);
+    function claimTicket(uint256 _ticketId, uint256 _lotteryId) external returns(bool);
 }
