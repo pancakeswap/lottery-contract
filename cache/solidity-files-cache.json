@@ -437,8 +437,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LotteryNFT.sol": {
-      "lastModificationDate": 1615382701793,
-      "contentHash": "c704129c1f485526e0d315d7475c1d52",
+      "lastModificationDate": 1615383946493,
+      "contentHash": "1364b2c60e73e552d0a3a2e9c392d88e",
       "sourceName": "contracts/LotteryNFT.sol",
       "solcConfig": {
         "version": "0.7.3",
