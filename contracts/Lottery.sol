@@ -71,7 +71,6 @@ contract Lottery is Ownable, Initializable, Testable {
         uint8[] prizeDistribution;  // The distribution for prize money
         uint256 startingTimestamp;      // Block timestamp for star of lotto
         uint256 closingTimestamp;       // Block timestamp for end of entries
-        uint256 endTimestamp;           // Block timestamp for claiming winnings
         uint16[] winningNumbers;     // The winning numbers
     }
     // Lottery ID's to info
@@ -89,7 +88,6 @@ contract Lottery is Ownable, Initializable, Testable {
         uint256 costPerTicket,
         uint256 startingTimestamp,
         uint256 closingTimestamp,
-        uint256 endTimestamp,
         address indexed creator
     );
 
@@ -163,6 +161,10 @@ contract Lottery is Ownable, Initializable, Testable {
             _bucketOneMaxNumber != 0 &&
             _bucketTwoMaxNumber != 0,
             "Bucket range cannot be 0"
+        );
+        require(
+            _bucketOneMaxNumber < _bucketTwoMaxNumber,
+            "Bucket one must be smaller"
         );
         require(
             _discountForBucketOne < _discountForBucketTwo &&
@@ -347,7 +349,7 @@ contract Lottery is Ownable, Initializable, Testable {
         );
         // Checks lottery numbers have not already been drawn
         require(
-            allLotteries_[_lotteryId].lotteryStatus != Status.Closed,
+            allLotteries_[_lotteryId].lotteryStatus == Status.Open,
             "Lottery State incorrect for draw"
         );
         uint256 checkTotal = 0;
@@ -398,19 +400,13 @@ contract Lottery is Ownable, Initializable, Testable {
      * @param   _closingTimestamp The block timestamp after which no more tickets
      *          will be sold for the lottery. Note that this timestamp MUST
      *          be after the starting block timestamp. 
-     * @param   _endTimestamp The block timestamp for the end of the lottery. After
-     *          this time users can withdraw any winnings. Note that between
-     *          the closing block and this end block the winning numbers must
-     *          be added by the admin. If they are not this end block timestamp
-     *          will be pushed back until winning numbers are added. 
      */
     function createNewLotto(
         uint8[] calldata _prizeDistribution,
         uint256 _prizePoolInCake,
         uint256 _costPerTicket,
         uint256 _startingTimestamp,
-        uint256 _closingTimestamp,
-        uint256 _endTimestamp
+        uint256 _closingTimestamp
     )
         external
         onlyOwner()
@@ -437,24 +433,28 @@ contract Lottery is Ownable, Initializable, Testable {
         );
         require(
             _startingTimestamp != 0 &&
-            _startingTimestamp < _closingTimestamp &&
-            _closingTimestamp < _endTimestamp,
+            _startingTimestamp < _closingTimestamp,
             "Timestamps for lottery invalid"
         );
         // Incrementing lottery ID 
         lotteryIDCounter_.increment();
         lotteryId = lotteryIDCounter_.current();
         uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
+        Status lotteryStatus;
+        if(_startingTimestamp >= getCurrentTime()) {
+            lotteryStatus = Status.Open;
+        } else {
+            lotteryStatus = Status.NotStarted;
+        }
         // Saving data in struct
         LottoInfo memory newLottery = LottoInfo(
             lotteryId,
-            Status.NotStarted,
+            lotteryStatus,
             _prizePoolInCake,
             _costPerTicket,
             _prizeDistribution,
             _startingTimestamp,
             _closingTimestamp,
-            _endTimestamp,
             winningNumbers
         );
         allLotteries_[lotteryId] = newLottery;
@@ -468,7 +468,6 @@ contract Lottery is Ownable, Initializable, Testable {
             _costPerTicket,
             _startingTimestamp,
             _closingTimestamp,
-            _endTimestamp,
             msg.sender
         );
     }
@@ -489,6 +488,7 @@ contract Lottery is Ownable, Initializable, Testable {
         uint16[] calldata _chosenNumbersForEachTicket
     )
         external
+        notContract()
     {
         // Ensuring the lottery is within a valid time
         require(
@@ -499,6 +499,11 @@ contract Lottery is Ownable, Initializable, Testable {
             getCurrentTime() < allLotteries_[_lotteryId].closingTimestamp,
             "Invalid time for mint:end"
         );
+        if(allLotteries_[_lotteryId].lotteryStatus == Status.NotStarted) {
+            if(allLotteries_[_lotteryId].startingTimestamp >= getCurrentTime()) {
+                allLotteries_[_lotteryId].lotteryStatus = Status.Open;
+            }
+        }
         require(
             allLotteries_[_lotteryId].lotteryStatus == Status.Open,
             "Lottery not in state for mint"
@@ -546,10 +551,10 @@ contract Lottery is Ownable, Initializable, Testable {
     }
 
 
-    function claimReward(uint256 _lotteryId, uint256 _tokenId) external {
+    function claimReward(uint256 _lotteryId, uint256 _tokenId) external notContract() {
         // Checking the lottery is in a valid time for claiming
         require(
-            allLotteries_[_lotteryId].endTimestamp <= getCurrentTime(),
+            allLotteries_[_lotteryId].closingTimestamp <= getCurrentTime(),
             "Wait till end to claim"
         );
         // Checks the lottery winning numbers are available 
@@ -585,14 +590,17 @@ contract Lottery is Ownable, Initializable, Testable {
     function batchClaimRewards(
         uint256 _lotteryId, 
         uint256[] calldata _tokeIds
-    ) external {
+    ) 
+        external 
+        notContract()
+    {
         require(
             _tokeIds.length <= 50,
             "Batch claim too large"
         );
         // Checking the lottery is in a valid time for claiming
         require(
-            allLotteries_[_lotteryId].endTimestamp <= getCurrentTime(),
+            allLotteries_[_lotteryId].closingTimestamp <= getCurrentTime(),
             "Wait till end to claim"
         );
         // Checks the lottery winning numbers are available 

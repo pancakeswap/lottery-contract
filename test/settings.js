@@ -108,7 +108,7 @@ const lotto = {
         invalid_mint_numbers: "Invalid chosen numbers",
         invalid_mint_approve: "ERC20: transfer amount exceeds allowance",
         invalid_draw_time: "Cannot set winning numbers during lottery",
-        invalid_draw_repeat: "Winning Numbers drawn",
+        invalid_draw_repeat: "Lottery State incorrect for draw",
         invalid_claim_time: "Wait till end to claim",
         invalid_claim_draw: "Winning Numbers not chosen yet",
         invalid_claim_owner: "Only the owner can claim",
