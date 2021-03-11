@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 // Inherited allowing for ownership of contract
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -16,6 +15,10 @@ import "./RandomNumberGenerator.sol";
 import "./ILotteryNFT.sol";
 // Allows for time manipulation. Set to 0x address on test/mainnet deploy
 import "./Testable.sol";
+// Safe math 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./SafeMath16.sol";
+import "./SafeMath8.sol";
 
 // TODO rename to Lottery when done
 contract Lottery is Ownable, Initializable, Testable {
@@ -25,8 +28,8 @@ contract Lottery is Ownable, Initializable, Testable {
     Counters.Counter private lotteryIDCounter_;
     // Safe math
     using SafeMath for uint256;
-    using SafeMath for uint16;
-    using SafeMath for uint8;
+    using SafeMath16 for uint16;
+    using SafeMath8 for uint8;
     // Safe ERC20
     using SafeERC20 for IERC20;
     // Address functionality 

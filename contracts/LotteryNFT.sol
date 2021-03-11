@@ -5,16 +5,19 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./ILottery.sol";
 import "./Testable.sol";
+// Safe math 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./SafeMath16.sol";
+import "./SafeMath8.sol";
 
 contract LotteryNFT is ERC1155, Ownable, Testable {
     // Libraries 
     // Safe math
     using SafeMath for uint256;
-    using SafeMath for uint16;
-    using SafeMath for uint8;
+    using SafeMath16 for uint16;
+    using SafeMath8 for uint8;
 
     // Counter for token IDs
     uint256 internal tokenIdsCount_ = 0;
