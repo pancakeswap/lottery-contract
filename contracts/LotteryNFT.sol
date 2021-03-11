@@ -138,8 +138,8 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
         //     uint16 start = uint16(_page.mul(500));
         //     uint16 end = uint16((_page.add(1)).mul(500));
         //     // Splitting out the chosen numbers
-        //     uint256[] calldata ticketsPage;
-        //     ticketsPage = userTickets_[_user][_lotteryId][start:end];
+        //     uint256[] calldata ticketsPage = userTickets_[_user][_lotteryId];
+        //     ticketsPage = [start:end];
         //     return ticketsPage;
         // }
         return userTickets_[_user][_lotteryId];
