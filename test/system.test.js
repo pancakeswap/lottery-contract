@@ -114,8 +114,7 @@ describe("Lottery contract", function() {
                     lotto.newLotto.prize,
                     lotto.newLotto.cost,
                     timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString()
                 )
             ).to.emit(lotteryInstance, lotto.events.new)
             // Checking that emitted event contains correct information
@@ -127,7 +126,6 @@ describe("Lottery contract", function() {
                 lotto.newLotto.cost,
                 timeStamp.toString(),
                 timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString(),
                 owner.address
             );
         });
@@ -146,8 +144,7 @@ describe("Lottery contract", function() {
                     lotto.newLotto.prize,
                     lotto.newLotto.cost,
                     timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_admin);
         });
@@ -166,8 +163,7 @@ describe("Lottery contract", function() {
                     lotto.newLotto.prize,
                     lotto.newLotto.cost,
                     timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_distribution_length);
         });
@@ -186,8 +182,7 @@ describe("Lottery contract", function() {
                     lotto.newLotto.prize,
                     lotto.newLotto.cost,
                     timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_distribution_total);
         });
@@ -206,8 +201,7 @@ describe("Lottery contract", function() {
                     lotto.errorData.prize,
                     lotto.newLotto.cost,
                     timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_price_or_cost);
             // Checking call reverts with correct error message
@@ -217,8 +211,7 @@ describe("Lottery contract", function() {
                     lotto.newLotto.prize,
                     lotto.errorData.cost,
                     timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_price_or_cost);
         });
@@ -237,8 +230,7 @@ describe("Lottery contract", function() {
                     lotto.newLotto.prize,
                     lotto.newLotto.cost,
                     lotto.errorData.startTime,
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                    timeStamp.plus(lotto.newLotto.closeIncrease).toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_timestamp);
             // Checking call reverts with correct error message
@@ -248,18 +240,6 @@ describe("Lottery contract", function() {
                     lotto.newLotto.prize,
                     lotto.newLotto.cost,
                     timeStamp.toString(),
-                    timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.endIncrease).toString()
-                )
-            ).to.be.revertedWith(lotto.errors.invalid_timestamp);
-            // Checking call reverts with correct error message
-            await expect(
-                lotteryInstance.connect(owner).createNewLotto(
-                    lotto.newLotto.distribution,
-                    lotto.newLotto.prize,
-                    lotto.newLotto.cost,
-                    timeStamp.toString(),
-                    timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
                     timeStamp.toString()
                 )
             ).to.be.revertedWith(lotto.errors.invalid_timestamp);
@@ -282,8 +262,7 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
         });
         /**
@@ -337,7 +316,6 @@ describe("Lottery contract", function() {
                 ticketNumbers
             );
             // Testing results
-            // TODO get user balances
             assert.equal(
                 price.toString(),
                 lotto.buy.one.cost,
@@ -515,8 +493,7 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
         });
         /**
@@ -584,6 +561,7 @@ describe("Lottery contract", function() {
          * Testing that numbers cannot be updated once chosen
          */
         it("Invalid winning numbers (already chosen)", async function() {
+            // Setting the time so that we can set winning numbers
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
@@ -631,8 +609,7 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
             // Buying tickets
             // Getting the price to buy
@@ -718,7 +695,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -796,7 +773,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -875,7 +852,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -955,7 +932,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -1036,7 +1013,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -1085,6 +1062,7 @@ describe("Lottery contract", function() {
                 lotto.draw.random,
                 randGenInstance.address
             );
+            await lotteryInstance.setCurrentTime(currentTime.toString());
             // Claiming winnings 
             await expect(
                 lotteryInstance.connect(buyer).claimReward(
@@ -1104,7 +1082,7 @@ describe("Lottery contract", function() {
             let currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             let timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -1147,7 +1125,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -1190,7 +1168,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -1258,7 +1236,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings with invalid numbers
@@ -1281,8 +1259,7 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
             // Getting the price to buy
             let prices = await lotteryInstance.costToBuyTicketsWithDiscount(
@@ -1332,7 +1309,7 @@ describe("Lottery contract", function() {
             currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings with invalid numbers
@@ -1357,14 +1334,13 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
             // Buying tickets
             // Getting the price to buy
             let prices = await lotteryInstance.costToBuyTicketsWithDiscount(
                 1,
-                50
+                49
             );
             // Sending the buyer the needed amount of cake
             await cakeInstance.connect(owner).transfer(
@@ -1378,14 +1354,14 @@ describe("Lottery contract", function() {
             );
             // Generating chosen numbers for buy
             let ticketNumbers = generateLottoNumbers({
-                numberOfTickets: 50, 
+                numberOfTickets: 49, 
                 lottoSize: lotto.setup.sizeOfLottery,
                 maxRange: lotto.setup.maxValidRange
             });
             // Batch buying tokens
             await lotteryInstance.connect(buyer).batchBuyLottoTicket(
                 1,
-                50,
+                49,
                 ticketNumbers
             );
             // Getting the price to buy
@@ -1440,7 +1416,7 @@ describe("Lottery contract", function() {
             let currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
             let timeStamp = new BigNumber(currentTime.toString());
-            let futureEndTime = timeStamp.plus(lotto.newLotto.endIncrease);
+            let futureEndTime = timeStamp.plus(lotto.newLotto.closeIncrease);
             // Setting the time forward 
             await lotteryInstance.setCurrentTime(futureEndTime.toString());
             // Claiming winnings 
@@ -1732,8 +1708,7 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
 
             let pricesBucketOne = await lotteryInstance.costToBuyTicketsWithDiscount(
@@ -1806,8 +1781,7 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
             // Getting the basic info around this lottery
             let lottoInfo = await lotteryInstance.getBasicLottoInfo(1);
@@ -1837,14 +1811,9 @@ describe("Lottery contract", function() {
                 timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
                 "Invalid starting time"
             );
-            assert.equal(
-                lottoInfo.endTimestamp.toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString(),
-                "Invalid starting time"
-            );
         });
 
-        it.only("Get User Tickets", async function() {
+        it("Get User Tickets", async function() {
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 
@@ -1855,8 +1824,7 @@ describe("Lottery contract", function() {
                 lotto.newLotto.prize,
                 lotto.newLotto.cost,
                 timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                timeStamp.plus(lotto.newLotto.endIncrease).toString()
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
             );
             // Buying tickets
             // Getting the price to buy
@@ -2139,67 +2107,10 @@ describe("Lottery contract", function() {
                 ticketNumbers
             );
 
-            // Getting the price to buy
-            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
-                1,
-                50
-            );
-            // Sending the buyer the needed amount of cake
-            await cakeInstance.connect(buyer).mint(
-                buyer.address,
-                prices[2]
-            );
-            // Approving lotto to spend cost
-            await cakeInstance.connect(buyer).approve(
-                lotteryInstance.address,
-                prices[2]
-            );
-            // Generating chosen numbers for buy
-            ticketNumbers = generateLottoNumbers({
-                numberOfTickets: 50, 
-                lottoSize: lotto.setup.sizeOfLottery,
-                maxRange: lotto.setup.maxValidRange
-            });
-            // Batch buying tokens
-            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
-                1,
-                50,
-                ticketNumbers
-            );
-
-            // Getting the price to buy
-            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
-                1,
-                50
-            );
-            // Sending the buyer the needed amount of cake
-            await cakeInstance.connect(buyer).mint(
-                buyer.address,
-                prices[2]
-            );
-            // Approving lotto to spend cost
-            await cakeInstance.connect(buyer).approve(
-                lotteryInstance.address,
-                prices[2]
-            );
-            // Generating chosen numbers for buy
-            ticketNumbers = generateLottoNumbers({
-                numberOfTickets: 50, 
-                lottoSize: lotto.setup.sizeOfLottery,
-                maxRange: lotto.setup.maxValidRange
-            });
-            // Batch buying tokens
-            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
-                1,
-                50,
-                ticketNumbers
-            );
-
             let userInfo = await lotteryNftInstance.getUserTickets(
                 1,
                 buyer.address
             );
-            console.log(userInfo)
         });
     });
 });
