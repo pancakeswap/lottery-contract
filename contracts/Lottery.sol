@@ -355,16 +355,6 @@ contract Lottery is Ownable, Initializable, Testable {
             allLotteries_[_lotteryId].lotteryStatus == Status.Open,
             "Lottery State incorrect for draw"
         );
-        uint256 checkTotal = 0;
-        for (uint256 j = 0; j < allLotteries_[_lotteryId].winningNumbers.length; j++) {
-            checkTotal = checkTotal.add(
-                allLotteries_[_lotteryId].winningNumbers[j]
-            );
-        }
-        require(
-            checkTotal == 0,
-            "Winning Numbers drawn check"
-        );
         // Sets lottery status to closed
         allLotteries_[_lotteryId].lotteryStatus = Status.Closed;
         // Requests a random number from the generator
