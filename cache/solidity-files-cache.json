@@ -253,8 +253,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lottery.sol": {
-      "lastModificationDate": 1615456831975,
-      "contentHash": "d3f752774ab77a0b2b50c47776b3e86d",
+      "lastModificationDate": 1615457014339,
+      "contentHash": "eed668bc53465a2d71e9ba78e3dc493c",
       "sourceName": "contracts/Lottery.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -283,12 +283,14 @@
         "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
         "@openzeppelin/contracts/utils/Counters.sol",
         "@openzeppelin/contracts/utils/Address.sol",
-        "@openzeppelin/contracts/math/SafeMath.sol",
         "@openzeppelin/contracts/proxy/Initializable.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
         "./RandomNumberGenerator.sol",
         "./ILotteryNFT.sol",
-        "./Testable.sol"
+        "./Testable.sol",
+        "@openzeppelin/contracts/math/SafeMath.sol",
+        "./SafeMath16.sol",
+        "./SafeMath8.sol"
       ],
       "versionPragmas": [
         ">0.6.0"
@@ -438,8 +440,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LotteryNFT.sol": {
-      "lastModificationDate": 1615455501874,
-      "contentHash": "c704129c1f485526e0d315d7475c1d52",
+      "lastModificationDate": 1615457059926,
+      "contentHash": "4d3f4f0d42168baefcdc54518f191cbc",
       "sourceName": "contracts/LotteryNFT.sol",
       "solcConfig": {
         "version": "0.7.3",
@@ -467,9 +469,11 @@
         "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/utils/Counters.sol",
-        "@openzeppelin/contracts/math/SafeMath.sol",
         "./ILottery.sol",
-        "./Testable.sol"
+        "./Testable.sol",
+        "@openzeppelin/contracts/math/SafeMath.sol",
+        "./SafeMath16.sol",
+        "./SafeMath8.sol"
       ],
       "versionPragmas": [
         "0.7.3"
@@ -1193,6 +1197,74 @@
       ],
       "artifacts": [
         "ILotteryNFT"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/SafeMath16.sol": {
+      "lastModificationDate": 1615457081319,
+      "contentHash": "dd5a21b6f1c2034356e48e88177e0154",
+      "sourceName": "contracts/SafeMath16.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "SafeMath16"
+      ]
+    },
+    "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/SafeMath8.sol": {
+      "lastModificationDate": 1615457080365,
+      "contentHash": "d59ef8b81a67d8eb74cee74232198dc5",
+      "sourceName": "contracts/SafeMath8.sol",
+      "solcConfig": {
+        "version": "0.7.3",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "SafeMath8"
       ]
     }
   }
