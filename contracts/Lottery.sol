@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 // Inherited allowing for ownership of contract
@@ -28,6 +29,8 @@ contract Lottery is Ownable, Initializable, Testable {
     using SafeMath for uint8;
     // Safe ERC20
     using SafeERC20 for IERC20;
+    // Address functionality 
+    using Address for address;
 
     // State variables 
     // Instance of Cake token (collateral currency for lotto)
@@ -130,6 +133,12 @@ contract Lottery is Ownable, Initializable, Testable {
             "Only random generator"
         );
         _;
+    }
+
+     modifier notContract() {
+        require(!address(msg.sender).isContract(), "contract not allowed");
+        require(msg.sender == tx.origin, "proxy contract not allowed");
+       _;
     }
 
     //-------------------------------------------------------------------------
@@ -255,6 +264,10 @@ contract Lottery is Ownable, Initializable, Testable {
             sizeOfLottery_ != _newSize,
             "Cannot set to current size"
         );
+        require(
+            sizeOfLottery_ != 0,
+            "Lottery size cannot be 0"
+        );
         sizeOfLottery_ = _newSize;
 
         emit UpdatedSizeOfLottery(
@@ -267,6 +280,10 @@ contract Lottery is Ownable, Initializable, Testable {
         require(
             maxValidRange_ != _newMaxRange,
             "Cannot set to current size"
+        );
+        require(
+            maxValidRange_ != 0,
+            "Max range cannot be 0"
         );
         maxValidRange_ = _newMaxRange;
 
@@ -290,6 +307,10 @@ contract Lottery is Ownable, Initializable, Testable {
             _bucketOneMax != 0 &&
             _bucketTwoMax != 0,
             "Bucket range cannot be 0"
+        );
+        require(
+            _bucketOneMax < _bucketTwoMax,
+            "Bucket one must be smaller"
         );
         require(
             _discountForBucketOne < _discountForBucketTwo &&
@@ -327,7 +348,17 @@ contract Lottery is Ownable, Initializable, Testable {
         // Checks lottery numbers have not already been drawn
         require(
             allLotteries_[_lotteryId].lotteryStatus != Status.Closed,
-            "Winning Numbers drawn"
+            "Lottery State incorrect for draw"
+        );
+        uint256 checkTotal = 0;
+        for (uint256 j = 0; j < allLotteries_[_lotteryId].winningNumbers.length; j++) {
+            checkTotal = checkTotal.add(
+                allLotteries_[_lotteryId].winningNumbers[j]
+            );
+        }
+        require(
+            checkTotal == 0,
+            "Winning Numbers drawn check"
         );
         // Sets lottery status to closed
         allLotteries_[_lotteryId].lotteryStatus = Status.Closed;
@@ -468,6 +499,14 @@ contract Lottery is Ownable, Initializable, Testable {
             getCurrentTime() < allLotteries_[_lotteryId].closingTimestamp,
             "Invalid time for mint:end"
         );
+        require(
+            allLotteries_[_lotteryId].lotteryStatus == Status.Open,
+            "Lottery not in state for mint"
+        );
+        require(
+            _numberOfTickets <= 50,
+            "Batch mint too large"
+        );
         // Temporary storage for the check of the chosen numbers array
         uint256 numberCheck = _numberOfTickets.mul(sizeOfLottery_);
         // Ensuring that there are the right amount of chosen numbers
@@ -547,6 +586,10 @@ contract Lottery is Ownable, Initializable, Testable {
         uint256 _lotteryId, 
         uint256[] calldata _tokeIds
     ) external {
+        require(
+            _tokeIds.length <= 50,
+            "Batch claim too large"
+        );
         // Checking the lottery is in a valid time for claiming
         require(
             allLotteries_[_lotteryId].endTimestamp <= getCurrentTime(),
@@ -613,7 +656,6 @@ contract Lottery is Ownable, Initializable, Testable {
         if(_numberOfTickets < bucketOneMax_) {
             discountAmount = cost.mul(discountForBucketOne_).div(100);
         } else if(
-            _numberOfTickets >= bucketOneMax_ && 
             _numberOfTickets < bucketTwoMax_
         ) {
             // Checks if the amount of tickets falls into the seccond bucket

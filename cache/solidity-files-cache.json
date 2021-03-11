@@ -253,8 +253,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/Lottery.sol": {
-      "lastModificationDate": 1615382784022,
-      "contentHash": "e10164f23b13da512fc262bfcc31b51e",
+      "lastModificationDate": 1615454238537,
+      "contentHash": "1c9485cdddf4e846028cee6fc6cbfa3d",
       "sourceName": "contracts/Lottery.sol",
       "solcConfig": {
         "version": "0.6.12",
@@ -282,6 +282,7 @@
         "@openzeppelin/contracts/token/ERC20/IERC20.sol",
         "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
         "@openzeppelin/contracts/utils/Counters.sol",
+        "@openzeppelin/contracts/utils/Address.sol",
         "@openzeppelin/contracts/math/SafeMath.sol",
         "@openzeppelin/contracts/proxy/Initializable.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
@@ -437,8 +438,8 @@
       ]
     },
     "/Users/veronicac/Desktop/projects/freelance/lottery-contract/contracts/LotteryNFT.sol": {
-      "lastModificationDate": 1615383946493,
-      "contentHash": "1364b2c60e73e552d0a3a2e9c392d88e",
+      "lastModificationDate": 1615453093413,
+      "contentHash": "00737b63ff37a9d341b6c923e465725a",
       "sourceName": "contracts/LotteryNFT.sol",
       "solcConfig": {
         "version": "0.7.3",

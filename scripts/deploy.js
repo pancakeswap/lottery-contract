@@ -57,23 +57,23 @@ const main = async () => {
         lotto.chainLink.keyHash,
         lotto.chainLink.fee
     );
-    randGenInstance = await randGenContract.deploy(
-        mock_vrfCoordInstance.address,
-        linkInstance.address,
-        lotto.chainLink.keyHash,
-        lotto.chainLink.fee
-    );
     lotteryInstance = await lotteryContract.deploy(
         cakeInstance.address,
         timerInstance.address,
         lotto.setup.sizeOfLottery,
         lotto.setup.maxValidRange,
-        randGenInstance.address,
         lotto.setup.bucket.one,
         lotto.setup.bucket.two,
         lotto.setup.bucketDiscount.one,
         lotto.setup.bucketDiscount.two,
         lotto.setup.bucketDiscount.three
+    );
+    randGenInstance = await randGenContract.deploy(
+        mock_vrfCoordInstance.address,
+        linkInstance.address,
+        lotteryInstance.address,
+        lotto.chainLink.keyHash,
+        lotto.chainLink.fee
     );
     lotteryNftInstance = await lotteryNftContract.deploy(
         lottoNFT.newLottoNft.uri,
@@ -83,7 +83,8 @@ const main = async () => {
 
     // Final set up of contracts
     await lotteryInstance.init(
-        lotteryNftInstance.address
+        lotteryNftInstance.address,
+        randGenInstance.address
     );
     // Making sure the lottery has some cake
     await cakeInstance.mint(
