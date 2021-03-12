@@ -3,7 +3,9 @@ artifacts
 .idea/
 node_modules
 to_nuke
-cache
-./cache
-cache/
+.cache/
 .env
+yarn.lock
+coverage/
+coverage.json
+.solcover.js
