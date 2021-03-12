@@ -172,7 +172,7 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
      */
     function batchMint(
         address _to,
-        uint256 _lottoId,
+        uint256 _lotteryId,
         uint8 _numberOfTickets,
         uint16[] calldata _numbers,
         uint8 sizeOfLottery
@@ -200,9 +200,9 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
                 _to,
                 numbers,
                 false,
-                _lottoId
+                _lotteryId
             );
-            userTickets_[_to][_lottoId].push(tokenIdsCount_);
+            userTickets_[_to][_lotteryId].push(tokenIdsCount_);
         }
         // Minting the batch of tokens
         _mintBatch(
@@ -214,7 +214,7 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
         // Emitting relevant info
         emit InfoBatchMint(
             _to, 
-            _lottoId,
+            _lotteryId,
             _numberOfTickets, 
             tokenIds
         ); 
