@@ -120,13 +120,7 @@ describe("Lottery contract", function() {
             // Checking that emitted event contains correct information
             .withArgs(
                 1,
-                0,
-                lotto.newLotto.distribution,
-                lotto.newLotto.prize,
-                lotto.newLotto.cost,
-                timeStamp.toString(),
-                timeStamp.plus(lotto.newLotto.closeIncrease).toString(),
-                owner.address
+                0
             );
         });
         /**
@@ -1813,7 +1807,7 @@ describe("Lottery contract", function() {
             );
         });
 
-        it.only("Get User Tickets", async function() {
+        it("Get User Tickets", async function() {
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();
             // Converting to a BigNumber for manipulation 

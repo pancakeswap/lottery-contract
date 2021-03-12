@@ -50,7 +50,7 @@ const lotto = {
         fee: ethers.utils.parseUnits("1", 19)
     },
     events: {
-        new: "NewLotteryCreated",
+        new: "LotteryOpen",
         mint: "NewBatchMint",
         request: "requestNumbers"
     },
