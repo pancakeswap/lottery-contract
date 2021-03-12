@@ -8,6 +8,8 @@ interface ILotteryNFT {
     // VIEW FUNCTIONS
     //-------------------------------------------------------------------------
 
+    function getTotalSupply() external view returns(uint256);
+
     function getTicketNumbers(
         uint256 _ticketID
     ) 

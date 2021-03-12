@@ -23,6 +23,8 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
     uint256 internal tokenIdsCount_ = 0;
     // State variables 
     address internal lotteryContract_;
+
+    uint256 internal totalSupply_;
     // Storage for ticket information
     struct TicketInfo {
         address owner;
@@ -89,6 +91,10 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
     //-------------------------------------------------------------------------
     // VIEW FUNCTIONS
     //-------------------------------------------------------------------------
+
+    function getTotalSupply() external view returns(uint256) {
+        return totalSupply_;
+    }
 
     /**
      * @param   _ticketID: The unique ID of the ticket
@@ -187,8 +193,8 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
         uint256[] memory tokenIds = new uint256[](_numberOfTickets);
         for (uint8 i = 0; i < _numberOfTickets; i++) {
             // Incrementing the tokenId counter
-            tokenIdsCount_ = tokenIdsCount_.add(1);
-            tokenIds[i] = tokenIdsCount_;
+            totalSupply_ = totalSupply_.add(1);
+            tokenIds[i] = totalSupply_;
             amounts[i] = 1;
             // Getting the start and end position of numbers for this ticket
             uint16 start = uint16(i.mul(sizeOfLottery));
@@ -196,13 +202,13 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
             // Splitting out the chosen numbers
             uint16[] calldata numbers = _numbers[start:end];
             // Storing the ticket information 
-            ticketInfo_[tokenIdsCount_] = TicketInfo(
+            ticketInfo_[totalSupply_] = TicketInfo(
                 _to,
                 numbers,
                 false,
                 _lotteryId
             );
-            userTickets_[_to][_lotteryId].push(tokenIdsCount_);
+            userTickets_[_to][_lotteryId].push(totalSupply_);
         }
         // Minting the batch of tokens
         _mintBatch(

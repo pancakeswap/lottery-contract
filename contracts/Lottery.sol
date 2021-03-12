@@ -4,13 +4,12 @@ pragma experimental ABIEncoderV2;
 // Imported OZ helper contracts
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 // Inherited allowing for ownership of contract
 import "@openzeppelin/contracts/access/Ownable.sol";
 // Allows for intergration with ChainLink VRF
-import "./RandomNumberGenerator.sol";
+import "./IRandomNumberGenerator.sol";
 // Interface for Lottery NFT to mint tokens
 import "./ILotteryNFT.sol";
 // Allows for time manipulation. Set to 0x address on test/mainnet deploy
@@ -23,9 +22,6 @@ import "./SafeMath8.sol";
 // TODO rename to Lottery when done
 contract Lottery is Ownable, Initializable, Testable {
     // Libraries 
-    // Counter for lottery IDs 
-    using Counters for Counters.Counter;
-    Counters.Counter private lotteryIDCounter_;
     // Safe math
     using SafeMath for uint256;
     using SafeMath16 for uint16;
@@ -41,9 +37,11 @@ contract Lottery is Ownable, Initializable, Testable {
     // Storing of the NFT
     ILotteryNFT internal nft_;
     // Storing of the randomness generator 
-    RandomNumberGenerator internal randomGenerator_;
+    IRandomNumberGenerator internal randomGenerator_;
     // Request ID for random number
     bytes32 internal requestId_;
+    // Counter for lottery IDs 
+    uint256 private lotteryIdCounter_;
 
     // Lottery size
     uint8 public sizeOfLottery_;
@@ -83,17 +81,6 @@ contract Lottery is Ownable, Initializable, Testable {
     // EVENTS
     //-------------------------------------------------------------------------
 
-    event NewLotteryCreated(
-        uint256 indexed lotteryId,
-        Status lotteryStatus,
-        uint8[] prizeDistribution,
-        uint256 prizePoolInCake,
-        uint256 costPerTicket,
-        uint256 startingTimestamp,
-        uint256 closingTimestamp,
-        address indexed creator
-    );
-
     event NewBatchMint(
         address indexed minter,
         uint256[] ticketIDs,
@@ -123,6 +110,10 @@ contract Lottery is Ownable, Initializable, Testable {
         uint8 discountForBucketTwo,
         uint8 discountForBucketThree
     );
+
+    event LotteryOpen(uint256 lotteryId, uint256 ticketSupply);
+
+    event LotteryClose(uint256 lotteryId, uint256 ticketSupply);
 
     //-------------------------------------------------------------------------
     // MODIFIERS
@@ -196,7 +187,7 @@ contract Lottery is Ownable, Initializable, Testable {
 
     function initialize(
         address _lotteryNFT,
-        address _randomNumberGenerator
+        address _IRandomNumberGenerator
     ) 
         external 
         initializer
@@ -204,11 +195,11 @@ contract Lottery is Ownable, Initializable, Testable {
     {
         require(
             _lotteryNFT != address(0) &&
-            _randomNumberGenerator != address(0),
+            _IRandomNumberGenerator != address(0),
             "Contracts cannot be 0 address"
         );
         nft_ = ILotteryNFT(_lotteryNFT);
-        randomGenerator_ = RandomNumberGenerator(_randomNumberGenerator);
+        randomGenerator_ = IRandomNumberGenerator(_IRandomNumberGenerator);
     }
 
     //-------------------------------------------------------------------------
@@ -379,6 +370,8 @@ contract Lottery is Ownable, Initializable, Testable {
             allLotteries_[_lotteryId].lotteryStatus = Status.Completed;
             allLotteries_[_lotteryId].winningNumbers = _split(_randomNumber);
         }
+
+        emit LotteryClose(_lotteryId, nft_.getTotalSupply());
     }
 
     /**
@@ -430,8 +423,8 @@ contract Lottery is Ownable, Initializable, Testable {
             "Timestamps for lottery invalid"
         );
         // Incrementing lottery ID 
-        lotteryIDCounter_.increment();
-        lotteryId = lotteryIDCounter_.current();
+        lotteryIdCounter_ = lotteryIdCounter_.add(1);
+        lotteryId = lotteryIdCounter_;
         uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
         Status lotteryStatus;
         if(_startingTimestamp >= getCurrentTime()) {
@@ -453,15 +446,9 @@ contract Lottery is Ownable, Initializable, Testable {
         allLotteries_[lotteryId] = newLottery;
 
         // Emitting important information around new lottery.
-        emit NewLotteryCreated(
-            lotteryId,
-            Status.NotStarted,
-            _prizeDistribution,
-            _prizePoolInCake,
-            _costPerTicket,
-            _startingTimestamp,
-            _closingTimestamp,
-            msg.sender
+        emit LotteryOpen(
+            lotteryId, 
+            nft_.getTotalSupply()
         );
     }
 
