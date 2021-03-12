@@ -1813,6 +1813,102 @@ describe("Lottery contract", function() {
             );
         });
 
+        it.only("Get User Tickets", async function() {
+            // Getting the current block timestamp
+            let currentTime = await lotteryInstance.getCurrentTime();
+            // Converting to a BigNumber for manipulation 
+            let timeStamp = new BigNumber(currentTime.toString());
+            // Creating a new lottery
+            await lotteryInstance.connect(owner).createNewLotto(
+                lotto.newLotto.distribution,
+                lotto.newLotto.prize,
+                lotto.newLotto.cost,
+                timeStamp.toString(),
+                timeStamp.plus(lotto.newLotto.closeIncrease).toString()
+            );
+            // Buying tickets
+            // Getting the price to buy
+            let prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            let ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+            // Getting the price to buy
+            prices = await lotteryInstance.costToBuyTicketsWithDiscount(
+                1,
+                50
+            );
+            // Sending the buyer the needed amount of cake
+            await cakeInstance.connect(buyer).mint(
+                buyer.address,
+                prices[2]
+            );
+            // Approving lotto to spend cost
+            await cakeInstance.connect(buyer).approve(
+                lotteryInstance.address,
+                prices[2]
+            );
+            // Generating chosen numbers for buy
+            ticketNumbers = generateLottoNumbers({
+                numberOfTickets: 50, 
+                lottoSize: lotto.setup.sizeOfLottery,
+                maxRange: lotto.setup.maxValidRange
+            });
+            // Batch buying tokens
+            await lotteryInstance.connect(buyer).batchBuyLottoTicket(
+                1,
+                50,
+                ticketNumbers
+            );
+
+
+            let tickets = await lotteryNftInstance.getUserTicketsPagination(
+                buyer.address,
+                1,
+                0,
+                50
+            );
+            let ticketsTwo = await lotteryNftInstance.getUserTicketsPagination(
+                buyer.address,
+                1,
+                50,
+                50
+            );
+            let userTickets = await lotteryNftInstance.getUserTickets(
+                1,
+                buyer.address
+            );
+            let allTickets = [...tickets[0],...ticketsTwo[0]];
+
+            assert.equal(
+                userTickets[99].toString(),
+                allTickets[99].toString(),
+                "Tickets are not equal from both view functions"
+            );
+        });
+
         it("Get User Tickets", async function() {
             // Getting the current block timestamp
             let currentTime = await lotteryInstance.getCurrentTime();
