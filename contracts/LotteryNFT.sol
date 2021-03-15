@@ -19,8 +19,6 @@ contract LotteryNFT is ERC1155, Ownable, Testable {
     using SafeMath16 for uint16;
     using SafeMath8 for uint8;
 
-    // Counter for token IDs
-    uint256 internal tokenIdsCount_ = 0;
     // State variables 
     address internal lotteryContract_;
 
