@@ -49,8 +49,4 @@ contract LotteryRewardProxy {
         adminAddress = _adminAddress;
     }
 
-    function setLottery(Lottery _lotteryAddress) external onlyAdmin {
-        lottery = _lotteryAddress;
-    }
-
 }

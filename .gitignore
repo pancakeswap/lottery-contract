@@ -1,6 +1,11 @@
 .gitattributes
-build
 artifacts
-.idea/*
-node_modules/*
-contracts/flattened/*.sol
+.idea/
+node_modules
+to_nuke
+cache
+.env
+yarn.lock
+coverage/
+coverage.json
+.solcover.js

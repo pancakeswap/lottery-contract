@@ -1,396 +1,721 @@
-pragma solidity 0.6.12;
+//SPDX-License-Identifier: MIT
+pragma solidity >0.6.0;
 pragma experimental ABIEncoderV2;
-
-import "./LotteryNFT.sol";
-import "./LotteryOwnable.sol";
+// Imported OZ helper contracts
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
+// Inherited allowing for ownership of contract
+import "@openzeppelin/contracts/access/Ownable.sol";
+// Allows for intergration with ChainLink VRF
+import "./IRandomNumberGenerator.sol";
+// Interface for Lottery NFT to mint tokens
+import "./ILotteryNFT.sol";
+// Allows for time manipulation. Set to 0x address on test/mainnet deploy
+import "./Testable.sol";
+// Safe math 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./SafeMath16.sol";
+import "./SafeMath8.sol";
 
-// import "@nomiclabs/buidler/console.sol";
-
-// 4 numbers
-contract Lottery is LotteryOwnable, Initializable {
+// TODO rename to Lottery when done
+contract Lottery is Ownable, Initializable, Testable {
+    // Libraries 
+    // Safe math
     using SafeMath for uint256;
-    using SafeMath for uint8;
+    using SafeMath16 for uint16;
+    using SafeMath8 for uint8;
+    // Safe ERC20
     using SafeERC20 for IERC20;
+    // Address functionality 
+    using Address for address;
 
-    uint8 constant keyLengthForEachBuy = 11;
-    // Allocation for first/sencond/third reward
-    uint8[3] public allocation;
-    // The TOKEN to buy lottery
-    IERC20 public cake;
-    // The Lottery NFT for tickets
-    LotteryNFT public lotteryNFT;
-    // adminAddress
-    address public adminAddress;
-    // maxNumber
-    uint8 public maxNumber;
-    // minPrice, if decimal is not 18, please reset it
-    uint256 public minPrice;
+    // State variables 
+    // Instance of Cake token (collateral currency for lotto)
+    IERC20 internal cake_;
+    // Storing of the NFT
+    ILotteryNFT internal nft_;
+    // Storing of the randomness generator 
+    IRandomNumberGenerator internal randomGenerator_;
+    // Request ID for random number
+    bytes32 internal requestId_;
+    // Counter for lottery IDs 
+    uint256 private lotteryIdCounter_;
 
-    // =================================
+    // Lottery size
+    uint8 public sizeOfLottery_;
+    // Max range for numbers (starting at 0)
+    uint16 public maxValidRange_;
+    // Buckets for discounts (i.e bucketOneMax_ = 20, less than 20 tickets gets
+    // discount)
+    uint8 public bucketOneMax_;
+    uint8 public bucketTwoMax_;
+    // Bucket discount amounts scaled by 100 (i.e 20% = 20)
+    uint8 public discountForBucketOne_;
+    uint8 public discountForBucketTwo_;
+    uint8 public discountForBucketThree_;
 
-    // issueId => winningNumbers[numbers]
-    mapping (uint256 => uint8[4]) public historyNumbers;
-    // issueId => [tokenId]
-    mapping (uint256 => uint256[]) public lotteryInfo;
-    // issueId => [totalAmount, firstMatchAmount, secondMatchingAmount, thirdMatchingAmount]
-    mapping (uint256 => uint256[]) public historyAmount;
-    // issueId => trickyNumber => buyAmountSum
-    mapping (uint256 => mapping(uint64 => uint256)) public userBuyAmountSum;
-    // address => [tokenId]
-    mapping (address => uint256[]) public userInfo;
+    // Represents the status of the lottery
+    enum Status { 
+        NotStarted,     // The lottery has not started yet
+        Open,           // The lottery is open for ticket purchases 
+        Closed,         // The lottery is no longer open for ticket purchases
+        Completed       // The lottery has been closed and the numbers drawn
+    }
+    // All the needed info around a lottery
+    struct LottoInfo {
+        uint256 lotteryID;          // ID for lotto
+        Status lotteryStatus;       // Status for lotto
+        uint256 prizePoolInCake;    // The amount of cake for prize money
+        uint256 costPerTicket;      // Cost per ticket in $cake
+        uint8[] prizeDistribution;  // The distribution for prize money
+        uint256 startingTimestamp;      // Block timestamp for star of lotto
+        uint256 closingTimestamp;       // Block timestamp for end of entries
+        uint16[] winningNumbers;     // The winning numbers
+    }
+    // Lottery ID's to info
+    mapping(uint256 => LottoInfo) internal allLotteries_;
 
-    uint256 public issueIndex = 0;
-    uint256 public totalAddresses = 0;
-    uint256 public totalAmount = 0;
-    uint256 public lastTimestamp;
+    //-------------------------------------------------------------------------
+    // EVENTS
+    //-------------------------------------------------------------------------
 
-    uint8[4] public winningNumbers;
+    event NewBatchMint(
+        address indexed minter,
+        uint256[] ticketIDs,
+        uint16[] numbers,
+        uint256 totalCost,
+        uint256 discount,
+        uint256 pricePaid
+    );
 
-    // default false
-    bool public drawingPhase;
+    event RequestNumbers(uint256 lotteryId, bytes32 requestId);
 
-    // =================================
+    event UpdatedSizeOfLottery(
+        address admin, 
+        uint8 newLotterySize
+    );
 
-    event Buy(address indexed user, uint256 tokenId);
-    event Drawing(uint256 indexed issueIndex, uint8[4] winningNumbers);
-    event Claim(address indexed user, uint256 tokenid, uint256 amount);
-    event DevWithdraw(address indexed user, uint256 amount);
-    event Reset(uint256 indexed issueIndex);
-    event MultiClaim(address indexed user, uint256 amount);
-    event MultiBuy(address indexed user, uint256 amount);
+    event UpdatedMaxRange(
+        address admin, 
+        uint16 newMaxRange
+    );
 
-    constructor() public {
+    event UpdatedBuckets(
+        address admin, 
+        uint8 bucketOneMax,
+        uint8 bucketTwoMax,
+        uint8 discountForBucketOne,
+        uint8 discountForBucketTwo,
+        uint8 discountForBucketThree
+    );
+
+    event LotteryOpen(uint256 lotteryId, uint256 ticketSupply);
+
+    event LotteryClose(uint256 lotteryId, uint256 ticketSupply);
+
+    //-------------------------------------------------------------------------
+    // MODIFIERS
+    //-------------------------------------------------------------------------
+
+    modifier onlyRandomGenerator() {
+        require(
+            msg.sender == address(randomGenerator_),
+            "Only random generator"
+        );
+        _;
+    }
+
+     modifier notContract() {
+        require(!address(msg.sender).isContract(), "contract not allowed");
+        require(msg.sender == tx.origin, "proxy contract not allowed");
+       _;
+    }
+
+    //-------------------------------------------------------------------------
+    // CONSTRUCTOR
+    //-------------------------------------------------------------------------
+
+    constructor(
+        address _cake, 
+        address _timer,
+        uint8 _sizeOfLotteryNumbers,
+        uint16 _maxValidNumberRange,
+        uint8 _bucketOneMaxNumber,
+        uint8 _bucketTwoMaxNumber,
+        uint8 _discountForBucketOne,
+        uint8 _discountForBucketTwo,
+        uint8 _discountForBucketThree
+    ) 
+        Testable(_timer)
+        public
+    {
+        require(
+            _bucketOneMaxNumber != 0 &&
+            _bucketTwoMaxNumber != 0,
+            "Bucket range cannot be 0"
+        );
+        require(
+            _bucketOneMaxNumber < _bucketTwoMaxNumber,
+            "Bucket one must be smaller"
+        );
+        require(
+            _discountForBucketOne < _discountForBucketTwo &&
+            _discountForBucketTwo < _discountForBucketThree,
+            "Discounts must increase"
+        );
+        require(
+            _cake != address(0),
+            "Contracts cannot be 0 address"
+        );
+        require(
+            _sizeOfLotteryNumbers != 0 &&
+            _maxValidNumberRange != 0,
+            "Lottery setup cannot be 0"
+        );
+        cake_ = IERC20(_cake);
+        sizeOfLottery_ = _sizeOfLotteryNumbers;
+        maxValidRange_ = _maxValidNumberRange;
+        
+        bucketOneMax_ = _bucketOneMaxNumber;
+        bucketTwoMax_ = _bucketTwoMaxNumber;
+        discountForBucketOne_ = _discountForBucketOne;
+        discountForBucketTwo_ = _discountForBucketTwo;
+        discountForBucketThree_ = _discountForBucketThree;
     }
 
     function initialize(
-        IERC20 _cake,
-        LotteryNFT _lottery,
-        uint256 _minPrice,
-        uint8 _maxNumber,
-        address _owner,
-        address _adminAddress
-    ) public initializer {
-        cake = _cake;
-        lotteryNFT = _lottery;
-        minPrice = _minPrice;
-        maxNumber = _maxNumber;
-        adminAddress = _adminAddress;
-        lastTimestamp = block.timestamp;
-        allocation = [60, 20, 10];
-        initOwner(_owner);
-    }
-
-    uint8[4] private nullTicket = [0,0,0,0];
-
-    modifier onlyAdmin() {
-        require(msg.sender == adminAddress, "admin: wut?");
-        _;
-    }
-
-    modifier inDrawingPhase() {
-        require(!drawed(), 'drawed, can not buy now');
-        require(!drawingPhase, 'drawing, can not buy now');
-        _;
-    }
-
-    function drawed() public view returns(bool) {
-        return winningNumbers[0] != 0;
-    }
-
-    function reset() external onlyAdmin {
-        require(drawed(), "drawed?");
-        lastTimestamp = block.timestamp;
-        totalAddresses = 0;
-        totalAmount = 0;
-        winningNumbers[0]=0;
-        winningNumbers[1]=0;
-        winningNumbers[2]=0;
-        winningNumbers[3]=0;
-        drawingPhase = false;
-        issueIndex = issueIndex +1;
-        if(getMatchingRewardAmount(issueIndex-1, 4) == 0) {
-            uint256 amount = getTotalRewards(issueIndex-1).mul(allocation[0]).div(100);
-            internalBuy(amount, nullTicket);
-        }
-        emit Reset(issueIndex);
-    }
-
-    function enterDrawingPhase() external onlyAdmin {
-        require(!drawed(), 'drawed');
-        drawingPhase = true;
-    }
-
-    // add externalRandomNumber to prevent node validators exploiting
-    function drawing(uint256 _externalRandomNumber) external onlyAdmin {
-        require(!drawed(), "reset?");
-        require(drawingPhase, "enter drawing phase first");
-        bytes32 _structHash;
-        uint256 _randomNumber;
-        uint8 _maxNumber = maxNumber;
-        bytes32 _blockhash = blockhash(block.number-1);
-
-        // waste some gas fee here
-        for (uint i = 0; i < 10; i++) {
-            getTotalRewards(issueIndex);
-        }
-        uint256 gasleft = gasleft();
-
-        // 1
-        _structHash = keccak256(
-            abi.encode(
-                _blockhash,
-                totalAddresses,
-                gasleft,
-                _externalRandomNumber
-            )
+        address _lotteryNFT,
+        address _IRandomNumberGenerator
+    ) 
+        external 
+        initializer
+        onlyOwner() 
+    {
+        require(
+            _lotteryNFT != address(0) &&
+            _IRandomNumberGenerator != address(0),
+            "Contracts cannot be 0 address"
         );
-        _randomNumber  = uint256(_structHash);
-        assembly {_randomNumber := add(mod(_randomNumber, _maxNumber),1)}
-        winningNumbers[0]=uint8(_randomNumber);
+        nft_ = ILotteryNFT(_lotteryNFT);
+        randomGenerator_ = IRandomNumberGenerator(_IRandomNumberGenerator);
+    }
 
-        // 2
-        _structHash = keccak256(
-            abi.encode(
-                _blockhash,
-                totalAmount,
-                gasleft,
-                _externalRandomNumber
-            )
+    //-------------------------------------------------------------------------
+    // VIEW FUNCTIONS
+    //-------------------------------------------------------------------------
+
+    function costToBuyTickets(
+        uint256 _lotteryId,
+        uint256 _numberOfTickets
+    ) 
+        external 
+        view 
+        returns(uint256 totalCost) 
+    {
+        uint256 pricePer = allLotteries_[_lotteryId].costPerTicket;
+        totalCost = pricePer.mul(_numberOfTickets);
+    }
+
+    function costToBuyTicketsWithDiscount(
+        uint256 _lotteryId,
+        uint256 _numberOfTickets
+    ) 
+        external 
+        view 
+        returns(
+            uint256 cost, 
+            uint256 discount, 
+            uint256 costWithDiscount
+        ) 
+    {
+        discount = _discount(_lotteryId, _numberOfTickets);
+        cost = this.costToBuyTickets(_lotteryId, _numberOfTickets);
+        costWithDiscount = cost.sub(discount);
+    }
+
+    function getBasicLottoInfo(uint256 _lotteryId) external view returns(
+        LottoInfo memory
+    )
+    {
+        return(
+            allLotteries_[_lotteryId]
+        ); 
+    }
+
+    function getMaxRange() external view returns(uint16) {
+        return maxValidRange_;
+    }
+
+    //-------------------------------------------------------------------------
+    // STATE MODIFYING FUNCTIONS 
+    //-------------------------------------------------------------------------
+
+    //-------------------------------------------------------------------------
+    // Restricted Access Functions (onlyOwner)
+
+    function updateSizeOfLottery(uint8 _newSize) external onlyOwner() {
+        require(
+            sizeOfLottery_ != _newSize,
+            "Cannot set to current size"
         );
-        _randomNumber  = uint256(_structHash);
-        assembly {_randomNumber := add(mod(_randomNumber, _maxNumber),1)}
-        winningNumbers[1]=uint8(_randomNumber);
-
-        // 3
-        _structHash = keccak256(
-            abi.encode(
-                _blockhash,
-                lastTimestamp,
-                gasleft,
-                _externalRandomNumber
-            )
+        require(
+            sizeOfLottery_ != 0,
+            "Lottery size cannot be 0"
         );
-        _randomNumber  = uint256(_structHash);
-        assembly {_randomNumber := add(mod(_randomNumber, _maxNumber),1)}
-        winningNumbers[2]=uint8(_randomNumber);
+        sizeOfLottery_ = _newSize;
 
-        // 4
-        _structHash = keccak256(
-            abi.encode(
-                _blockhash,
-                gasleft,
-                _externalRandomNumber
-            )
+        emit UpdatedSizeOfLottery(
+            msg.sender, 
+            _newSize
         );
-        _randomNumber  = uint256(_structHash);
-        assembly {_randomNumber := add(mod(_randomNumber, _maxNumber),1)}
-        winningNumbers[3]=uint8(_randomNumber);
-        historyNumbers[issueIndex] = winningNumbers;
-        historyAmount[issueIndex] = calculateMatchingRewardAmount();
-        drawingPhase = false;
-        emit Drawing(issueIndex, winningNumbers);
     }
 
-    function internalBuy(uint256 _price, uint8[4] memory _numbers) internal {
-        require (!drawed(), 'drawed, can not buy now');
-        for (uint i = 0; i < 4; i++) {
-            require (_numbers[i] <= maxNumber, 'exceed the maximum');
-        }
-        uint256 tokenId = lotteryNFT.newLotteryItem(address(this), _numbers, _price, issueIndex);
-        lotteryInfo[issueIndex].push(tokenId);
-        totalAmount = totalAmount.add(_price);
-        lastTimestamp = block.timestamp;
-        emit Buy(address(this), tokenId);
+    function updateMaxRange(uint16 _newMaxRange) external onlyOwner() {
+        require(
+            maxValidRange_ != _newMaxRange,
+            "Cannot set to current size"
+        );
+        require(
+            maxValidRange_ != 0,
+            "Max range cannot be 0"
+        );
+        maxValidRange_ = _newMaxRange;
 
+        emit UpdatedMaxRange(
+            msg.sender, 
+            _newMaxRange
+        );
     }
 
-    function buy(uint256 _price, uint8[4] memory _numbers) external inDrawingPhase {
-        require (_price >= minPrice, 'price must above minPrice');
-        for (uint i = 0; i < 4; i++) {
-            require (_numbers[i] <= maxNumber, 'exceed number scope');
-        }
-        uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers, _price, issueIndex);
-        lotteryInfo[issueIndex].push(tokenId);
-        if (userInfo[msg.sender].length == 0) {
-            totalAddresses = totalAddresses + 1;
-        }
-        userInfo[msg.sender].push(tokenId);
-        totalAmount = totalAmount.add(_price);
-        lastTimestamp = block.timestamp;
-        uint64[keyLengthForEachBuy] memory userNumberIndex = generateNumberIndexKey(_numbers);
-        for (uint i = 0; i < keyLengthForEachBuy; i++) {
-            userBuyAmountSum[issueIndex][userNumberIndex[i]]=userBuyAmountSum[issueIndex][userNumberIndex[i]].add(_price);
-        }
-        cake.safeTransferFrom(address(msg.sender), address(this), _price);
-        emit Buy(msg.sender, tokenId);
+    function updateBuckets(
+        uint8 _bucketOneMax,
+        uint8 _bucketTwoMax,
+        uint8 _discountForBucketOne,
+        uint8 _discountForBucketTwo,
+        uint8 _discountForBucketThree
+    )
+        external
+        onlyOwner() 
+    {
+        require(
+            _bucketOneMax != 0 &&
+            _bucketTwoMax != 0,
+            "Bucket range cannot be 0"
+        );
+        require(
+            _bucketOneMax < _bucketTwoMax,
+            "Bucket one must be smaller"
+        );
+        require(
+            _discountForBucketOne < _discountForBucketTwo &&
+            _discountForBucketTwo < _discountForBucketThree,
+            "Discounts must increase"
+        );
+        bucketOneMax_ = _bucketOneMax;
+        bucketTwoMax_ = _bucketTwoMax;
+        discountForBucketOne_ = _discountForBucketOne;
+        discountForBucketTwo_ = _discountForBucketTwo;
+        discountForBucketThree_ = _discountForBucketThree;
+
+        emit UpdatedBuckets(
+            msg.sender,
+            _bucketOneMax,
+            _bucketTwoMax,
+            _discountForBucketOne,
+            _discountForBucketTwo,
+            _discountForBucketThree
+        );
     }
 
-    function  multiBuy(uint256 _price, uint8[4][] memory _numbers) external inDrawingPhase {
-        require (_price >= minPrice, 'price must above minPrice');
-        uint256 totalPrice  = 0;
-        for (uint i = 0; i < _numbers.length; i++) {
-            for (uint j = 0; j < 4; j++) {
-                require (_numbers[i][j] <= maxNumber && _numbers[i][j] > 0, 'exceed number scope');
+    function drawWinningNumbers(
+        uint256 _lotteryId, 
+        uint256 _seed
+    ) 
+        external 
+        onlyOwner() 
+    {
+        // Checks that the lottery is past the closing block
+        require(
+            allLotteries_[_lotteryId].closingTimestamp <= getCurrentTime(),
+            "Cannot set winning numbers during lottery"
+        );
+        // Checks lottery numbers have not already been drawn
+        require(
+            allLotteries_[_lotteryId].lotteryStatus == Status.Open,
+            "Lottery State incorrect for draw"
+        );
+        // Sets lottery status to closed
+        allLotteries_[_lotteryId].lotteryStatus = Status.Closed;
+        // Requests a random number from the generator
+        requestId_ = randomGenerator_.getRandomNumber(_lotteryId, _seed);
+        // Emits that random number has been requested
+        emit RequestNumbers(_lotteryId, requestId_);
+    }
+
+    function numbersDrawn(
+        uint256 _lotteryId,
+        bytes32 _requestId, 
+        uint256 _randomNumber
+    ) 
+        external
+        onlyRandomGenerator()
+    {
+        require(
+            allLotteries_[_lotteryId].lotteryStatus == Status.Closed,
+            "Draw numbers first"
+        );
+        if(requestId_ == _requestId) {
+            allLotteries_[_lotteryId].lotteryStatus = Status.Completed;
+            allLotteries_[_lotteryId].winningNumbers = _split(_randomNumber);
+        }
+
+        emit LotteryClose(_lotteryId, nft_.getTotalSupply());
+    }
+
+    /**
+     * @param   _prizeDistribution An array defining the distribution of the 
+     *          prize pool. I.e if a lotto has 5 numbers, the distribution could
+     *          be [5, 10, 15, 20, 30] = 100%. This means if you get one number
+     *          right you get 5% of the pool, 2 matching would be 10% and so on.
+     * @param   _prizePoolInCake The amount of Cake available to win in this 
+     *          lottery.
+     * @param   _startingTimestamp The block timestamp for the beginning of the 
+     *          lottery. 
+     * @param   _closingTimestamp The block timestamp after which no more tickets
+     *          will be sold for the lottery. Note that this timestamp MUST
+     *          be after the starting block timestamp. 
+     */
+    function createNewLotto(
+        uint8[] calldata _prizeDistribution,
+        uint256 _prizePoolInCake,
+        uint256 _costPerTicket,
+        uint256 _startingTimestamp,
+        uint256 _closingTimestamp
+    )
+        external
+        onlyOwner()
+        returns(uint256 lotteryId)
+    {
+        require(
+            _prizeDistribution.length == sizeOfLottery_,
+            "Invalid distribution"
+        );
+        uint256 prizeDistributionTotal = 0;
+        for (uint256 j = 0; j < _prizeDistribution.length; j++) {
+            prizeDistributionTotal = prizeDistributionTotal.add(
+                uint256(_prizeDistribution[j])
+            );
+        }
+        // Ensuring that prize distribution total is 100%
+        require(
+            prizeDistributionTotal == 100,
+            "Prize distribution is not 100%"
+        );
+        require(
+            _prizePoolInCake != 0 && _costPerTicket != 0,
+            "Prize or cost cannot be 0"
+        );
+        require(
+            _startingTimestamp != 0 &&
+            _startingTimestamp < _closingTimestamp,
+            "Timestamps for lottery invalid"
+        );
+        // Incrementing lottery ID 
+        lotteryIdCounter_ = lotteryIdCounter_.add(1);
+        lotteryId = lotteryIdCounter_;
+        uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
+        Status lotteryStatus;
+        if(_startingTimestamp >= getCurrentTime()) {
+            lotteryStatus = Status.Open;
+        } else {
+            lotteryStatus = Status.NotStarted;
+        }
+        // Saving data in struct
+        LottoInfo memory newLottery = LottoInfo(
+            lotteryId,
+            lotteryStatus,
+            _prizePoolInCake,
+            _costPerTicket,
+            _prizeDistribution,
+            _startingTimestamp,
+            _closingTimestamp,
+            winningNumbers
+        );
+        allLotteries_[lotteryId] = newLottery;
+
+        // Emitting important information around new lottery.
+        emit LotteryOpen(
+            lotteryId, 
+            nft_.getTotalSupply()
+        );
+    }
+
+    function withdrawCake(uint256 _amount) external onlyOwner() {
+        cake_.transfer(
+            msg.sender, 
+            _amount
+        );
+    }
+
+    //-------------------------------------------------------------------------
+    // General Access Functions
+
+    function batchBuyLottoTicket(
+        uint256 _lotteryId,
+        uint8 _numberOfTickets,
+        uint16[] calldata _chosenNumbersForEachTicket
+    )
+        external
+        notContract()
+    {
+        // Ensuring the lottery is within a valid time
+        require(
+            getCurrentTime() >= allLotteries_[_lotteryId].startingTimestamp,
+            "Invalid time for mint:start"
+        );
+        require(
+            getCurrentTime() < allLotteries_[_lotteryId].closingTimestamp,
+            "Invalid time for mint:end"
+        );
+        if(allLotteries_[_lotteryId].lotteryStatus == Status.NotStarted) {
+            if(allLotteries_[_lotteryId].startingTimestamp >= getCurrentTime()) {
+                allLotteries_[_lotteryId].lotteryStatus = Status.Open;
             }
-            uint256 tokenId = lotteryNFT.newLotteryItem(msg.sender, _numbers[i], _price, issueIndex);
-            lotteryInfo[issueIndex].push(tokenId);
-            if (userInfo[msg.sender].length == 0) {
-                totalAddresses = totalAddresses + 1;
+        }
+        require(
+            allLotteries_[_lotteryId].lotteryStatus == Status.Open,
+            "Lottery not in state for mint"
+        );
+        require(
+            _numberOfTickets <= 50,
+            "Batch mint too large"
+        );
+        // Temporary storage for the check of the chosen numbers array
+        uint256 numberCheck = _numberOfTickets.mul(sizeOfLottery_);
+        // Ensuring that there are the right amount of chosen numbers
+        require(
+            _chosenNumbersForEachTicket.length == numberCheck,
+            "Invalid chosen numbers"
+        );
+        // Getting the cost and discount for the token purchase
+        (
+            uint256 totalCost, 
+            uint256 discount, 
+            uint256 costWithDiscount
+        ) = this.costToBuyTicketsWithDiscount(_lotteryId, _numberOfTickets);
+        // Transfers the required cake to this contract
+        cake_.transferFrom(
+            msg.sender, 
+            address(this), 
+            costWithDiscount
+        );
+        // Batch mints the user their tickets
+        uint256[] memory ticketIds = nft_.batchMint(
+            msg.sender,
+            _lotteryId,
+            _numberOfTickets,
+            _chosenNumbersForEachTicket,
+            sizeOfLottery_
+        );
+        // Emitting event with all information
+        emit NewBatchMint(
+            msg.sender,
+            ticketIds,
+            _chosenNumbersForEachTicket,
+            totalCost,
+            discount,
+            costWithDiscount
+        );
+    }
+
+
+    function claimReward(uint256 _lotteryId, uint256 _tokenId) external notContract() {
+        // Checking the lottery is in a valid time for claiming
+        require(
+            allLotteries_[_lotteryId].closingTimestamp <= getCurrentTime(),
+            "Wait till end to claim"
+        );
+        // Checks the lottery winning numbers are available 
+        require(
+            allLotteries_[_lotteryId].lotteryStatus == Status.Completed,
+            "Winning Numbers not chosen yet"
+        );
+        require(
+            nft_.getOwnerOfTicket(_tokenId) == msg.sender,
+            "Only the owner can claim"
+        );
+        // Sets the claim of the ticket to true (if claimed, will revert)
+        require(
+            nft_.claimTicket(_tokenId, _lotteryId),
+            "Numbers for ticket invalid"
+        );
+        // Getting the number of matching tickets
+        uint8 matchingNumbers = _getNumberOfMatching(
+            nft_.getTicketNumbers(_tokenId),
+            allLotteries_[_lotteryId].winningNumbers
+        );
+        // Getting the prize amount for those matching tickets
+        uint256 prizeAmount = _prizeForMatching(
+            matchingNumbers,
+            _lotteryId
+        );
+        // Removing the prize amount from the pool
+        allLotteries_[_lotteryId].prizePoolInCake = allLotteries_[_lotteryId].prizePoolInCake.sub(prizeAmount);
+        // Transfering the user their winnings
+        cake_.safeTransfer(address(msg.sender), prizeAmount);
+    }
+
+    function batchClaimRewards(
+        uint256 _lotteryId, 
+        uint256[] calldata _tokeIds
+    ) 
+        external 
+        notContract()
+    {
+        require(
+            _tokeIds.length <= 50,
+            "Batch claim too large"
+        );
+        // Checking the lottery is in a valid time for claiming
+        require(
+            allLotteries_[_lotteryId].closingTimestamp <= getCurrentTime(),
+            "Wait till end to claim"
+        );
+        // Checks the lottery winning numbers are available 
+        require(
+            allLotteries_[_lotteryId].lotteryStatus == Status.Completed,
+            "Winning Numbers not chosen yet"
+        );
+        // Creates a storage for all winnings
+        uint256 totalPrize = 0;
+        // Loops through each submitted token
+        for (uint256 i = 0; i < _tokeIds.length; i++) {
+            // Checks user is owner (will revert entire call if not)
+            require(
+                nft_.getOwnerOfTicket(_tokeIds[i]) == msg.sender,
+                "Only the owner can claim"
+            );
+            // If token has already been claimed, skip token
+            if(
+                nft_.getTicketClaimStatus(_tokeIds[i])
+            ) {
+                continue;
             }
-            userInfo[msg.sender].push(tokenId);
-            totalAmount = totalAmount.add(_price);
-            lastTimestamp = block.timestamp;
-            totalPrice = totalPrice.add(_price);
-            uint64[keyLengthForEachBuy] memory numberIndexKey = generateNumberIndexKey(_numbers[i]);
-            for (uint k = 0; k < keyLengthForEachBuy; k++) {
-                userBuyAmountSum[issueIndex][numberIndexKey[k]]=userBuyAmountSum[issueIndex][numberIndexKey[k]].add(_price);
+            // Claims the ticket (will only revert if numbers invalid)
+            require(
+                nft_.claimTicket(_tokeIds[i], _lotteryId),
+                "Numbers for ticket invalid"
+            );
+            // Getting the number of matching tickets
+            uint8 matchingNumbers = _getNumberOfMatching(
+                nft_.getTicketNumbers(_tokeIds[i]),
+                allLotteries_[_lotteryId].winningNumbers
+            );
+            // Getting the prize amount for those matching tickets
+            uint256 prizeAmount = _prizeForMatching(
+                matchingNumbers,
+                _lotteryId
+            );
+            // Removing the prize amount from the pool
+            allLotteries_[_lotteryId].prizePoolInCake = allLotteries_[_lotteryId].prizePoolInCake.sub(prizeAmount);
+            totalPrize = totalPrize.add(prizeAmount);
+        }
+        // Transferring the user their winnings
+        cake_.safeTransfer(address(msg.sender), totalPrize);
+    }
+
+    //-------------------------------------------------------------------------
+    // INTERNAL FUNCTIONS 
+    //-------------------------------------------------------------------------
+
+    function _discount(
+        uint256 lotteryId, 
+        uint256 _numberOfTickets
+    )
+        internal 
+        view
+        returns(uint256 discountAmount)
+    {
+        // Gets the raw cost for the tickets
+        uint256 cost = this.costToBuyTickets(lotteryId, _numberOfTickets);
+        // Checks if the amount of tickets falls into the first bucket
+        if(_numberOfTickets < bucketOneMax_) {
+            discountAmount = cost.mul(discountForBucketOne_).div(100);
+        } else if(
+            _numberOfTickets < bucketTwoMax_
+        ) {
+            // Checks if the amount of tickets falls into the seccond bucket
+            discountAmount = cost.mul(discountForBucketTwo_).div(100);
+        } else {
+            // Checks if the amount of tickets falls into the last bucket
+            discountAmount = cost.mul(discountForBucketThree_).div(100);
+        }
+    }
+
+    function _getNumberOfMatching(
+        uint16[] memory _usersNumbers, 
+        uint16[] memory _winningNumbers
+    )
+        internal
+        pure
+        returns(uint8 noOfMatching)
+    {
+        // Loops through all wimming numbers
+        for (uint256 i = 0; i < _winningNumbers.length; i++) {
+            // If the winning numbers and user numbers match
+            if(_usersNumbers[i] == _winningNumbers[i]) {
+                // The number of matching numbers incrases
+                noOfMatching += 1;
             }
         }
-        cake.safeTransferFrom(address(msg.sender), address(this), totalPrice);
-        emit MultiBuy(msg.sender, totalPrice);
     }
 
-    function claimReward(uint256 _tokenId) external {
-        require(msg.sender == lotteryNFT.ownerOf(_tokenId), "not from owner");
-        require (!lotteryNFT.getClaimStatus(_tokenId), "claimed");
-        uint256 reward = getRewardView(_tokenId);
-        lotteryNFT.claimReward(_tokenId);
-        if(reward>0) {
-            cake.safeTransfer(address(msg.sender), reward);
+    /**
+     * @param   _noOfMatching: The number of matching numbers the user has
+     * @param   _lotteryId: The ID of the lottery the user is claiming on
+     * @return  uint256: The prize amount in cake the user is entitled to 
+     */
+    function _prizeForMatching(
+        uint8 _noOfMatching,
+        uint256 _lotteryId
+    ) 
+        internal  
+        view
+        returns(uint256) 
+    {
+        uint256 prize = 0;
+        // If user has no matching numbers their prize is 0
+        if(_noOfMatching == 0) {
+            return 0;
+        } 
+        // Getting the percentage of the pool the user has won
+        uint256 perOfPool = allLotteries_[_lotteryId].prizeDistribution[_noOfMatching-1];
+        // Timesing the percentage one by the pool
+        prize = allLotteries_[_lotteryId].prizePoolInCake.mul(perOfPool);
+        // Returning the prize divided by 100 (as the prize distribution is scaled)
+        return prize.div(100);
+    }
+
+    function _split(
+        uint256 _randomNumber
+    ) 
+        internal
+        view 
+        returns(uint16[] memory) 
+    {
+        // Temparary storage for winning numbers
+        uint16[] memory winningNumbers = new uint16[](sizeOfLottery_);
+        // Loops the size of the number of tickets in the lottery
+        for(uint i = 0; i < sizeOfLottery_; i++){
+            // Encodes the random number with its position in loop
+            bytes32 hashOfRandom = keccak256(abi.encodePacked(_randomNumber, i));
+            // Casts random number hash into uint256
+            uint256 numberRepresentation = uint256(hashOfRandom);
+            // Sets the winning number position to a uint16 of random hash number
+            winningNumbers[i] = uint16(numberRepresentation.mod(maxValidRange_));
         }
-        emit Claim(msg.sender, _tokenId, reward);
+    return winningNumbers;
     }
-
-    function  multiClaim(uint256[] memory _tickets) external {
-        uint256 totalReward = 0;
-        for (uint i = 0; i < _tickets.length; i++) {
-            require (msg.sender == lotteryNFT.ownerOf(_tickets[i]), "not from owner");
-            require (!lotteryNFT.getClaimStatus(_tickets[i]), "claimed");
-            uint256 reward = getRewardView(_tickets[i]);
-            if(reward>0) {
-                totalReward = reward.add(totalReward);
-            }
-        }
-        lotteryNFT.multiClaimReward(_tickets);
-        if(totalReward>0) {
-            cake.safeTransfer(address(msg.sender), totalReward);
-        }
-        emit MultiClaim(msg.sender, totalReward);
-    }
-
-    function generateNumberIndexKey(uint8[4] memory number) public pure returns (uint64[keyLengthForEachBuy] memory) {
-        uint64[4] memory tempNumber;
-        tempNumber[0]=uint64(number[0]);
-        tempNumber[1]=uint64(number[1]);
-        tempNumber[2]=uint64(number[2]);
-        tempNumber[3]=uint64(number[3]);
-
-        uint64[keyLengthForEachBuy] memory result;
-        result[0] = tempNumber[0]*256*256*256*256*256*256 + 1*256*256*256*256*256 + tempNumber[1]*256*256*256*256 + 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
-
-        result[1] = tempNumber[0]*256*256*256*256 + 1*256*256*256 + tempNumber[1]*256*256 + 2*256+ tempNumber[2];
-        result[2] = tempNumber[0]*256*256*256*256 + 1*256*256*256 + tempNumber[1]*256*256 + 3*256+ tempNumber[3];
-        result[3] = tempNumber[0]*256*256*256*256 + 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
-        result[4] = 1*256*256*256*256*256 + tempNumber[1]*256*256*256*256 + 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
-
-        result[5] = tempNumber[0]*256*256 + 1*256+ tempNumber[1];
-        result[6] = tempNumber[0]*256*256 + 2*256+ tempNumber[2];
-        result[7] = tempNumber[0]*256*256 + 3*256+ tempNumber[3];
-        result[8] = 1*256*256*256 + tempNumber[1]*256*256 + 2*256 + tempNumber[2];
-        result[9] = 1*256*256*256 + tempNumber[1]*256*256 + 3*256 + tempNumber[3];
-        result[10] = 2*256*256*256 + tempNumber[2]*256*256 + 3*256 + tempNumber[3];
-
-        return result;
-    }
-
-    function calculateMatchingRewardAmount() internal view returns (uint256[4] memory) {
-        uint64[keyLengthForEachBuy] memory numberIndexKey = generateNumberIndexKey(winningNumbers);
-
-        uint256 totalAmout1 = userBuyAmountSum[issueIndex][numberIndexKey[0]];
-
-        uint256 sumForTotalAmout2 = userBuyAmountSum[issueIndex][numberIndexKey[1]];
-        sumForTotalAmout2 = sumForTotalAmout2.add(userBuyAmountSum[issueIndex][numberIndexKey[2]]);
-        sumForTotalAmout2 = sumForTotalAmout2.add(userBuyAmountSum[issueIndex][numberIndexKey[3]]);
-        sumForTotalAmout2 = sumForTotalAmout2.add(userBuyAmountSum[issueIndex][numberIndexKey[4]]);
-
-        uint256 totalAmout2 = sumForTotalAmout2.sub(totalAmout1.mul(4));
-
-        uint256 sumForTotalAmout3 = userBuyAmountSum[issueIndex][numberIndexKey[5]];
-        sumForTotalAmout3 = sumForTotalAmout3.add(userBuyAmountSum[issueIndex][numberIndexKey[6]]);
-        sumForTotalAmout3 = sumForTotalAmout3.add(userBuyAmountSum[issueIndex][numberIndexKey[7]]);
-        sumForTotalAmout3 = sumForTotalAmout3.add(userBuyAmountSum[issueIndex][numberIndexKey[8]]);
-        sumForTotalAmout3 = sumForTotalAmout3.add(userBuyAmountSum[issueIndex][numberIndexKey[9]]);
-        sumForTotalAmout3 = sumForTotalAmout3.add(userBuyAmountSum[issueIndex][numberIndexKey[10]]);
-
-        uint256 totalAmout3 = sumForTotalAmout3.add(totalAmout1.mul(6)).sub(sumForTotalAmout2.mul(3));
-
-        return [totalAmount, totalAmout1, totalAmout2, totalAmout3];
-    }
-
-    function getMatchingRewardAmount(uint256 _issueIndex, uint256 _matchingNumber) public view returns (uint256) {
-        return historyAmount[_issueIndex][5 - _matchingNumber];
-    }
-
-    function getTotalRewards(uint256 _issueIndex) public view returns(uint256) {
-        require (_issueIndex <= issueIndex, '_issueIndex <= issueIndex');
-
-        if(!drawed() && _issueIndex == issueIndex) {
-            return totalAmount;
-        }
-        return historyAmount[_issueIndex][0];
-    }
-
-    function getRewardView(uint256 _tokenId) public view returns(uint256) {
-        uint256 _issueIndex = lotteryNFT.getLotteryIssueIndex(_tokenId);
-        uint8[4] memory lotteryNumbers = lotteryNFT.getLotteryNumbers(_tokenId);
-        uint8[4] memory _winningNumbers = historyNumbers[_issueIndex];
-        require(_winningNumbers[0] != 0, "not drawed");
-
-        uint256 matchingNumber = 0;
-        for (uint i = 0; i < lotteryNumbers.length; i++) {
-            if (_winningNumbers[i] == lotteryNumbers[i]) {
-                matchingNumber= matchingNumber +1;
-            }
-        }
-        uint256 reward = 0;
-        if (matchingNumber > 1) {
-            uint256 amount = lotteryNFT.getLotteryAmount(_tokenId);
-            uint256 poolAmount = getTotalRewards(_issueIndex).mul(allocation[4-matchingNumber]).div(100);
-            reward = amount.mul(1e12).div(getMatchingRewardAmount(_issueIndex, matchingNumber)).mul(poolAmount);
-        }
-        return reward.div(1e12);
-    }
-
-
-    // Update admin address by the previous dev.
-    function setAdmin(address _adminAddress) public onlyOwner {
-        adminAddress = _adminAddress;
-    }
-
-    // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function adminWithdraw(uint256 _amount) public onlyAdmin {
-        cake.safeTransfer(address(msg.sender), _amount);
-        emit DevWithdraw(msg.sender, _amount);
-    }
-
-    // Set the minimum price for one ticket
-    function setMinPrice(uint256 _price) external onlyAdmin {
-        minPrice = _price;
-    }
-
-    // Set the minimum price for one ticket
-    function setMaxNumber(uint8 _maxNumber) external onlyAdmin {
-        maxNumber = _maxNumber;
-    }
-
-    // Set the allocation for one reward
-    function setAllocation(uint8 _allcation1, uint8 _allcation2, uint8 _allcation3) external onlyAdmin {
-        require (_allcation1 + _allcation2 + _allcation3 < 100, 'exceed 100');
-        allocation = [_allcation1, _allcation2, _allcation3];
-    }
-
 }
