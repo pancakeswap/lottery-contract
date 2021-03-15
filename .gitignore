@@ -3,7 +3,7 @@ artifacts
 .idea/
 node_modules
 to_nuke
-.cache/
+cache
 .env
 yarn.lock
 coverage/
